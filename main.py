@@ -27,46 +27,43 @@ class Truck:
         self.time = time
         self.truckID = truckID
 
+
 parsedPackages = []
 
-# nearest neighbor algorithm. O(N^3)
-def nearestNeighbor(truck):
-    #for every package on truck, initialize variables
-    for i in truck.packages:
-        shortestPath = float('inf') 
+#gives us diff between two locations. O(N)
+def heuristic(start, end):
+    return abs(start - end)
 
-        #Every ID on the truck, return the package object from the list if id matches
-        for j in truck.packages:
-            for Package in parsedPackages:
-                if Package.id == j:
-                    currentPackage = Package
+#returns the graph node. O(1)
+def get_neighbors(graph, node):
+    return graph[node]
 
-            #Assign distance between truck address and the package destination
-            distance = distanceData[addressDict[truck.address]][addressDict[currentPackage.address]]
+# nearest neighbor O(N^2)
+def deliver(truck):
+    #while truck has packages , load queue 
+    package_queue = deque(truck.packages)
+    nextPackage = None
+    time = datetime.timedelta(hours=10, minutes=20)
 
-            #recursively check whether current distance is less than initialized path and if package is not delivered yet. 
-            while distance < shortestPath and currentPackage.time_delivered is None:
-                nextPackage = currentPackage
-                shortestPath = distance
+    while package_queue:
+        for package_id in package_queue:
+            for package in parsedPackages:
+                if package.id == package_id:
+                    #fetch packages, store distance between truck and next address
+                    distance = distanceData[truck.address][package.address]
+                    nextPackage = package
 
-        #current package with becomes next package to be delivered
-        package = nextPackage
+        if nextPackage:
+            distance = distanceData[truck.address][nextPackage.address]
+            truck.miles += distance
+            truck.time += datetime.timedelta(minutes=(distance / (0.3)))
+            print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
+            truck.address = nextPackage.address
+            nextPackage.time_delivered = truck.time
+            nextPackage.truckID = truck.truckID
+            #after delivered , remove package
+            package_queue.remove(nextPackage.id)
 
-        #increment mileage and time using 18mph
-        distance = distanceData[addressDict[truck.address]][addressDict[package.address]]
-        truck.miles += distance
-        truck.time += datetime.timedelta(minutes=(distance / (18 * (1 / 60))))
-
-#       print(f"Truck {truck.truckID} delivered package {package.id} time: {truck.time}")
-        truck.address = package.address
-        package.time_delivered = truck.time
-        package.truckID = truck.truckID
-
-    #return to the hub
-    distance = distanceData[addressDict[truck.address]][addressDict["4001 South 700 East"]]
-    truck.miles += distance
-
- #   print(f"Truck {truck.truckID} delivered package {package.id} time: {truck.time}")
   
 # hash table
 hashTable = HashTable()
@@ -77,7 +74,7 @@ distanceData = []
 #dictionary initilized 
 addressDict = {}
 
-#open csv file then add all row to the initialized dictionary as key-val pairs. col1 is index, col3 is value. O(N)
+#open csv file then add all row to the initialized dictionary as key-val pairs. 
 def loadAddresses():
     with open('WGUPS_Addresses.csv',  encoding='utf-8-sig') as file:
         reader = csv.reader(file)
@@ -92,7 +89,6 @@ loadAddresses()
 #open csv file and add every row from the file to the initialized data structure. O(N)
 def load_package_data(hashTable):
     try:
-        #enconded to utf-8 to avoid formatt issues
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
             package_reader = csv.reader(csvfile, delimiter=',')
             
@@ -107,7 +103,9 @@ def load_package_data(hashTable):
                 weight = row[6].strip()
                 special_notes = row[7].strip()
               
-                new_package = Package(id, address, city, state, zip_code, deliveryTime, weight,
+                # get the index of the address
+                address_index = addressDict[address]
+                new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight,
                                       special_notes)
 
                 hashTable.insert(id ,new_package)
@@ -117,7 +115,7 @@ def load_package_data(hashTable):
 
 load_package_data(hashTable)
 
-#open csv file and add every row in the file to the initialized array. O(N)
+#open csv file and add every row in the file to the initialized array. O(N). N is row of data
 def read_distance_data():
     with open('distance_data.csv', 'r') as file:
         csv_reader = csv.reader(file)
@@ -128,13 +126,11 @@ def read_distance_data():
     return distanceData
 
 
-#Iterate through array and check for zeroes. complete matrix by adding zeroes equal to length of the column for the perpendicular row. O(N^2)
+#Loop array and check for zeroes. asert zeroes equal to length of the column for the perpendicular row. O(N^2)
 def inflectionMatrix(matrix):
     size = len(matrix)
-    # Create an empty matrix with the same dimensions
     reflectedMatrix = [[0] * size for i in range(size)]
 
-    # Populate the reflected matrix
     for i in range(size):
         for j in range(size):
             if i == j:
@@ -150,9 +146,8 @@ distance_matrix = read_distance_data()
 reflected_distance_matrix = inflectionMatrix(distance_matrix)
 
 #print each row in arr O(N)
-for a in distanceData:
-    print(a)
-
+#for a in distanceData:
+#    print(a)
 
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
@@ -164,7 +159,7 @@ for a in packageKey1:
             truck1Packages.append(Package.id)
 
 #truck initialization packages/departure location/time , truckID
-truck1 = Truck(truck1Packages, "4001 South 700 East", 0,  datetime.timedelta(hours=8, minutes=30), 1)
+truck1 = Truck(truck1Packages, addressDict["4001 South 700 East"], 0,  datetime.timedelta(hours=8, minutes=0), 1)
 
 #truck2
 packageKey2 = [3, 6, 18, 22, 23, 25, 27, 28, 32, 33, 35, 36, 38]
@@ -176,7 +171,7 @@ for b in packageKey2:
         if Package.id == str(b):
             truck2Packages.append(Package.id)
 
-truck2 = Truck(truck2Packages, "4001 South 700 East", 0, datetime.timedelta(hours=9, minutes=15) , 2)
+truck2 = Truck(truck2Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=9, minutes=10) , 2)
 
 # truck3
 packageKey3 = [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 24, 26, 39]
@@ -185,117 +180,125 @@ packageKey3 = [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 24, 26, 39]
 truck3Packages = []
 for c in packageKey3:
     for Package in parsedPackages:
-        if Package.id == str(c): #parse as str
+        if Package.id == str(c): #parse as str 
             truck3Packages.append(Package.id)
 
-truck3 = Truck(truck3Packages, "4001 South 700 East", 0, datetime.timedelta(hours=10, minutes=20)  , 3)
+truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
+
+deliver(truck1)
+deliver(truck2)
+deliver(truck3)
+
+#interface
+def interface():
+    print('WGUPS Package delivery service')
+    print("Route commpleted in: ", truck1.miles + truck2.miles + truck3.miles, "miles")
+    print("Truck1 miles", truck1.miles)
+    print("Truck2 miles", truck2.miles)
+    print("Truck3 miles", truck3.miles)
+    print("Enter a command (1-3):")
+    print("1. Display specific package")
+    print("2. Display all package status")
+    print("3. Exit")
+    selectedNum = int(input())
+
+    while selectedNum != 3:
+
+                #if user selects #, conditional
+                if selectedNum == 1:
+                        packageId = input('Enter a Package ID (1-40):')
+
+                        timeStamp = input('Enter a time using HH:MM format: ')
+                        (h, m) = timeStamp.split(':')
+
+                        timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
+                        
+                    #    returnPackage = hashTable.search(packageId)
+                    #   print(type(returnPackage))
+                    #   print(returnPackage.id)
+
+                        #if package obj in list matches the input, we return the package object. O(1)
+                        for Package in parsedPackages:
+                            if Package.id == packageId:
+                                tempStorage = Package
+                        
+                    #based on package's truck ID, assign a time when the truck leaves hub and based on timestamp user enters and based on condition, return a msg value. O(1)
+
+                        mg = ''
+                        truckDepartureTime = {
+                            1: datetime.timedelta(hours=8, minutes=0),
+                            2: datetime.timedelta(hours=9, minutes=10),
+                            3: datetime.timedelta(hours=10, minutes=0)
+                        }
+                        
+                        if tempStorage.truckID == 1:
+                            initTime = truckDepartureTime[1]
+                        elif tempStorage.truckID == 2:
+                            initTime = truckDepartureTime[2]
+                        elif tempStorage.truckID == 3:
+                            initTime = truckDepartureTime[3]
+                        
+                        print('Delivery time', tempStorage.time_delivered)
+                        print('Departure time', initTime)
+
+                        if timeStamp <= initTime:
+                            mg = "at hub"
+                        elif initTime < timeStamp < tempStorage.time_delivered:
+                            mg =  "en route"
+                        elif timeStamp >= tempStorage.time_delivered:
+                            mg =  "delivered"
 
 
-#based on package's truck ID, assign a time when the truck leaves hub and based on timestamp user enters and based on condition, return a msg value. O(1)
-def returnStatus(package, timeStamp):
-    truckDepartureTime = {
-        1: datetime.timedelta(hours=8, minutes=0),
-        2: datetime.timedelta(hours=9, minutes=15),
-        3: datetime.timedelta(hours=10, minutes=20)
-    }
-    
-    if package.truckID == 1:
-        initTime = truckDepartureTime[1]
-    elif package.truckID == 2:
-        initTime = truckDepartureTime[2]
-    elif package.truckID == 3:
-        initTime = truckDepartureTime[3]
-        
-    if timeStamp <= initTime:
-        return "at hub"
-    elif initTime < timeStamp < package.time_delivered:
-        return "en route"
-    elif timeStamp >= package.time_delivered:
-        return "delivered"
+                        print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
-nearestNeighbor(truck1)
-nearestNeighbor(truck2)
-nearestNeighbor(truck3)
+                elif selectedNum == 2:
+                    timeStamp = input('Enter a time in HH:MM format: ')
+                    (h, m) = timeStamp.split(':')
+                    timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
+                    print("Status of packages at", timeStamp)
 
-while True:
-    #interface
-    try:
-        print('WGUPS Package delivery service')
-        print("Route commpleted in: ", truck1.miles + truck2.miles + truck3.miles, "miles")
-        print("Truck1 miles", truck1.miles)
-        print("Truck2 miles", truck2.miles)
-        print("Truck3 miles", truck3.miles)
-        print("Enter a command (1-3):")
-        print("1. Display specific package")
-        print("2. Display all package status")
-        print("3. Exit")
-        selectedNum = int(input())
+                    #fetch all packages stored from the parsedPackage list and insert them  into p4kages list, O(N) 
+                    p4ckages = []
 
-        #if user selects #, conditional
-        if selectedNum == 1:
-                packageId = input('Enter a Package ID (1-40):')
+                    for Package in parsedPackages:
+                        p4ckages.append(Package)
 
-                timeStamp = input('Enter a time using HH:MM format: ')
-                #splices at : and removes semicolon
-                (h, m) = timeStamp.split(':')
+                    status = ""
 
-                timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
-                
-                returnPackage = hashTable.search(packageId)
-             #   print(type(returnPackage))
-             #   print(returnPackage.id)
-
-                #if package obj in list matches the input, we return the package object. O(1)
-                for Package in parsedPackages:
-                    if Package.id == packageId:
-                        tempStorage = Package
-                
-                #assign whats returned from the function 
-                status = returnStatus(tempStorage, timeStamp)
-
-                print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {status} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
-
-        elif selectedNum == 2:
-            timeStamp = input('Enter a time in HH:MM format: ')
-            (h, m) = timeStamp.split(':')
-            timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
-            print("Status of packages at", timeStamp)
-
-            #fetch all packages stored from the parsedPackage list and insert them  into p4kages list, O(N) 
-            p4ckages = []
-
-            for Package in parsedPackages:
-                p4ckages.append(Package)
-
-            status = ""
-
-            #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
-            for Package in p4ckages:
-                msg = ''
-                truckDepartureTime = {
-                1: datetime.timedelta(hours=8, minutes=30),
-                2: datetime.timedelta(hours=9, minutes=15),
-                3: datetime.timedelta(hours=10, minutes=20)
-                }
-       
-                if Package.truckID == 1:
-                    initTime = truckDepartureTime[1]
-                elif Package.truckID == 2:
-                    initTime = truckDepartureTime[2]
-                elif Package.truckID == 3:
-                    initTime = truckDepartureTime[3]
-                    
-                if timeStamp <= initTime:
-                    status = "at hub"
-                elif initTime < timeStamp < Package.time_delivered:
-                    status = "en route"
-                elif timeStamp >= Package.time_delivered:
-                    status =  "delivered"
+                    #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
+                    for Package in p4ckages:
+                        msg = ''
+                        truckDepartureTime = {
+                        1: datetime.timedelta(hours=8, minutes=0),
+                        2: datetime.timedelta(hours=9, minutes=5),
+                        3: datetime.timedelta(hours=11, minutes=0)
+                        }
             
-                print(f"PackageID: {Package.id} \n\nStatus: {status} \n\nAddress: {Package.address} \n\nDeadline: {Package.deliveryTime} \n\n")
+                        if Package.truckID == 1:
+                            initTime = truckDepartureTime[1]
+                        elif Package.truckID == 2:
+                            initTime = truckDepartureTime[2]
+                        elif Package.truckID == 3:
+                            initTime = truckDepartureTime[3]
+                            
+                        if timeStamp <= initTime:
+                            status = "at hub"
+                        elif initTime < timeStamp < Package.time_delivered:
+                            status = "en route"
+                        elif timeStamp >= Package.time_delivered:
+                            status =  "delivered"
+                    
+                        print(f"PackageID: {Package.id} \n\nStatus: {status} \n\nAddress: {Package.address} \n\nDeadline: {Package.deliveryTime} \n\n")
 
-        elif selectedNum == 3:
-            exit()
+                elif selectedNum == 3:
+                    exit()
 
-    except Exception as e:
-        print(e)
+                print("Enter a command (1-3):")
+                print("1. Display specific package")
+                print("2. Display all package status")
+                print("3. Exit")
+                selectedNum = int(input())
+
+#main
+if __name__ == "__main__":
+    interface()

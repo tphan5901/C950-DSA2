@@ -151,7 +151,7 @@ reflected_distance_matrix = inflectionMatrix(distance_matrix)
 
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
-#loop through every item in list above then loop through parsedPackages and check if keys match, if they do then add to truck1packages list. O(n^2)
+#loop through every item in list above then loop through parsedPackages and check if keys match, if they do then add to truck1packages list. time complexity: O(n^2)
 truck1Packages = []
 for a in packageKey1:
     for Package in parsedPackages:

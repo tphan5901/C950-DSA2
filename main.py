@@ -30,7 +30,7 @@ class Truck:
 
 parsedPackages = []
 
-#gives us diff between two locations. O(N)
+#gives us diff between two locations. time complexity: O(1), space complexity: O(1)
 def heuristic(start, end):
     return abs(start - end)
 

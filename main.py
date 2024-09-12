@@ -38,7 +38,7 @@ def heuristic(start, end):
 def get_neighbors(graph, node):
     return graph[node]
 
-# nearest neighbor O(N^2)
+#while there's packages in queue, obtain next package , increment the distance & miles O(N^2)
 def deliver(truck):
     #while truck has packages , load queue 
     package_queue = deque(truck.packages)

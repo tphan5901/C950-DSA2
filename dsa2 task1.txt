@@ -8,13 +8,12 @@ B)
 5) The program is straightforward to use through a user interface. All the calculations are performed in the background and stored within class objects. Useful functions are implemented, they're accessible through dot operators. It maintainable since it uses basic programming principles and there are comments explaining what the code structure does. Testing/verification method is done using print statements on the initialized memory structures.
  6) Lists can store packages and offer fast lookups. However, they are limited by the available memory of the hardware's RAM. Lists are straightforward to implement but lack the structure needed for more complex data handling. On the other hand, dictionaries provide a more organized way to manage key-value pairs.  They can encounter issues with hash collisions as more addresses are added, leading to slow lookups. When multiple values hash to the same bucket, it can result in decreased performance.
 C)
-D. A list is a linear data structure used to store a collection of items. In this case, package.It is capable of dynamic sizing based on the number of elements added. Lists offer several advantages:
-Dynamic Memory Allocation: Lists can grow or shrink in size, utlizing the underlying hardware's RAM.
-Fast Access: Lists provide O(1) access to elements based on their index. Insertion and deletion operations are performed in linear time O(N).
-Hash Table for Mapping Packages
-A hash table is a data structure that uses unique identifiers, known as keys, with their corresponding values. This structure employs a hash function to convert keys into indices in an array, creating a mapping system.
-Key-Value Mapping: Each key is associated with a value, allowing for efficient data retrieval based on the unique identifier. This mapping enhances data organization and accessibility.
-Handling Collisions: When collisions occur, chaining is used (where a linked list is maintained at each index) or open addressing.
+D. A list is a linear data structure used to store a collection of items. In this case, package. It is capable of dynamic sizing based on the number of elements added. Lists offer several advantages:
+⦁	Dynamic Memory Allocation: Lists can grow or shrink in size, utlizing the underlying hardware's RAM.
+⦁	Fast Access: Lists provide O(1) access to elements based on their index. Insertion and deletion operations are performed in linear time O(N).
+- A hash table is a data structure that uses unique identifiers, known as keys assocciated with their corresponding values. A hash function converts the keys into indices in an array, creating a mapping system.
+⦁	Key-Value Mapping: Each key is associated with a value, allowing for efficient data retrieval based on the unique identifier.
+⦁	Handling Collisions: When collisions occur, chaining is used (where a linked list is maintained at each index).
 2)
 E) I'll be using code for the hashtable from the webinar
 F)
@@ -22,21 +21,21 @@ H.  Provide a screenshot showing successful completion of the code, that include
  
 
 I) 
--Greedy algorithm operates on the principle of making the most immediate, locally optimal choice that lead to a global optimum. In context of package delivery, the algorithm prioritizes deliveries based on a specific criterion�such as the nearest delivery location�without considering the broader implications of each choice.
+-Greedy algorithm operates on the principle of making the most immediate, locally optimal choice that lead to a global optimum. In context of package delivery, the algorithm prioritizes deliveries based on a specific criterion—such as the nearest delivery location—without considering the broader implications of each choice.
 -Breadth-First Search (BFS) is a fundamental graph traversal algorithm that visits vertices in layers, starting from a designated source vertex. It systematically visits neighboring vertices at the present depth level before moving on to the vertices at the next depth level.
-The current solution finds the shortest path from one package location uses a more comprehensive approach than the simple greedy algorithm. It may incorporate  Dijkstra�s or A* search, which account for distances and the constraints. Unlike BFS, which is effective for unweighted scenarios, these algorithms can handle weighted graphs, giving leeway for more nuanced decision-making that balances multiple factors, such as distance and time.
+The current solution finds the shortest path from one package location uses a more comprehensive approach than the simple greedy algorithm. It may incorporate  Dijkstra’s or A* search, which account for distances and the constraints. Unlike BFS, which is effective for unweighted scenarios, these algorithms can handle weighted graphs, giving leeway for more nuanced decision-making that balances multiple factors, such as distance and time.
 
 J.  Describe what you would do differently, other than the two algorithms identified in I3, if you did this project again.
-There would've been an if-else structure to decide where trucks the packages should be going based on the notes and deadlines. I'd a consider a more graph based program that maps out a route by comparing distances between all the edge cases and deciding  an optimal path that is shortest using djistra's algorithm.
+An if-else structure is implemented to decide where trucks the packages should be going based on the notes and deadlines. I'd a consider a more graph based program that maps out a route by comparing distances between all the edge cases to decide an optimal path. If we did not use a queue to load up the packages, the program will perform faster O(N^2) and use less resources O(N).
 K
 a) Lists were used to store packages. Whenever data is fetched from the hashtable, intiated lists on the main file are used to stored them. They're flexible when it comes to storing various data types and is able to handle large volumes of data as well without tradeoff in performance. The spacial complexity of list sits at o(n + k) which means it continously expands as more packages are added if more addresses have to be delivered it'll add onto the spacial usage. 
 b) Arrays can be used to store the distances while dictionaries can store the packages. 
 -With arrays we represent the mappings between 2nd distances. 
 - Dictionaries can use the packages as keys to create hashes.
-The system can utilize arrays to find the shortest distances between locations while using the dictionary to quickly access the associated package information for each delivery point. This combination optimizes both the speed and efficiency of the delivery process.
+The system uses arrays to find the shortest distances between locations while using the dictionary to quickly access the associated package information for each delivery point. This combination optimizes both the speed and efficiency of the delivery process.
 c) The implications is when we're manually loading the packages. It's going to be difficult when there is a larger volume. That is the reason there is a decision structure automatically decide where the packages are getting loaded based on the EOC.
 2) Dictionary for the hashtable and queue for the distance
-a) Dictionaries can be efficient when come to quickly fetching packages since it's lookup time is O(1). Queues can useful for loading up packages instead of dictionaries. A queue operates on the (FIFO) principle, making it suitable for managing the order of packages being loaded and unloaded. This can be useful when tracking packages.
+a) Dictionaries can be efficient when come to quickly fetching packages. It's lookup time is O(1). Queues can useful for loading up packages instead of dictionaries. A queue operates on the (FIFO) principle, making it suitable for managing the order of packages being loaded and unloaded. This can be useful when tracking packages.
 
 L) Code for hashtable from DSA2 webinar
 class HashTable:
@@ -72,13 +71,3 @@ class HashTable:
                 return kv[1]   
             else:
                 return None
-
-I.  Justify the core algorithm you identified in part A and used in the solution by doing the following:
-        1.  Describe at least two strengths of the algorithm used in the solution.
-        2.  Verify that the algorithm used in the solution meets all requirements in the scenario.
-        3.  Identify two other named algorithms, different from the algorithm implemented in the solution, that would meet the requirements in the scenario.
-                a.  Describe how each algorithm identified in part I3 is different from the algorithm used in the solution.
-        
-
-K.  Justify the data structure you identified in part D by doing the following:
-        1.  Verify that the data structure used in the solution meets all requirements in the scenario. Explain how the time needed to complete the look-up function is affected by changes in the number of packages to be delivered. Explain how the data structure space usage is affected by changes in the number of packages to be delivered. Describe how changes to the number of trucks or the number of cities would affect the look-up time and the space usage of the data structure.

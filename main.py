@@ -30,15 +30,15 @@ class Truck:
 
 parsedPackages = []
 
-#gives us diff between two locations. time complexity: O(1), space complexity: O(1)
+#gives us diff between two locations. time complexity = O(N)
 def heuristic(start, end):
     return abs(start - end)
 
-#returns the graph node. O(1)
+#returns list of neighbor nodes. time complexity = O(1)
 def get_neighbors(graph, node):
     return graph[node]
 
-#while there's packages in queue, obtain next package , increment the distance & miles O(N^2)
+# time complexity = O(N^3), outer while loop and two inner loops. space complexity = O(N^2) memory is used for queue data structure and parsedpackages list
 def deliver(truck):
     #while truck has packages , load queue 
     package_queue = deque(truck.packages)

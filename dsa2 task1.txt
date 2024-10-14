@@ -10,7 +10,7 @@ The data structures decided for the program are lists and dictionaries. A Dictio
  6) Lists can store packages and offer fast lookups. However, they are limited by the available memory of the hardware's RAM. Lists are straightforward to implement but lack the structure needed for more complex data handling. On the other hand, dictionaries provide a more organized way to manage key-value pairs.  They can encounter issues with hash collisions as more addresses are added, leading to slow lookups. When multiple values hash to the same bucket, it results in decreased performance.
 C. Write an overview of your program in which you do the following:
 1. Explain the algorithm’s logic using pseudocode.
-define deliver():
+function deliver():
     queue = [LoadPackages]
     while queue:
             package = lookUp(package.id)

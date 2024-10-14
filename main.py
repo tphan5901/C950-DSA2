@@ -18,6 +18,15 @@ class Package:
         self.time_delivered = None
         self.truckID = 0
 
+    def __str__(self):
+        return ("ID: %s, Address: %-20s, City: %s, State: %s, Zip: %s, "
+                "Delivery Time: %s, Weight: %s, Notes: %s, "
+                "Time Delivered: %s, Truck ID: %s") % (
+            self.id, self.address, self.city, self.state, self.zip,
+            self.deliveryTime, self.weight, self.notes, self.time_delivered, self.truckID
+        )
+        
+
 #create truck class object
 class Truck:
     def __init__(self, packages, address, miles, time, truckID):

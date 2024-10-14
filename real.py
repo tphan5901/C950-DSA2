@@ -252,15 +252,9 @@ def interface():
 
             status = ""
 
-            #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
-            for Package in p4ckages:
-                msg = ''
-                truckDepartureTime = {
-                1: datetime.timedelta(hours=8, minutes=0),
-                2: datetime.timedelta(hours=9, minutes=5),
-                3: datetime.timedelta(hours=10, minutes=0)
-                }
-    
+            address = next(key for key, value in addressDict.items() if value == Package.address)
+
+                #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
                 if Package.truckID == 1:
                     initTime = truckDepartureTime[1]
                 elif Package.truckID == 2:
@@ -275,7 +269,7 @@ def interface():
                 elif timeStamp >= Package.time_delivered:
                     status =  "delivered"
                         
-                table_data.append([Package.id, Package.address, status, Package.deliveryTime, Package.truckID])
+                table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
 
             print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
 

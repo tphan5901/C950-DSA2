@@ -236,7 +236,7 @@ def interface():
 
             print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
-        elif selectedNum == 2:
+          elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
             (h, m) = timeStamp.split(':')
             timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
@@ -249,12 +249,20 @@ def interface():
 
             for Package in parsedPackages:
                 p4ckages.append(Package)
-
+                
             status = ""
 
-            address = next(key for key, value in addressDict.items() if value == Package.address)
+            #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
+            for Package in p4ckages:
+                msg = ''
+                truckDepartureTime = {
+                1: datetime.timedelta(hours=8, minutes=0),
+                2: datetime.timedelta(hours=9, minutes=5),
+                3: datetime.timedelta(hours=10, minutes=0)
+                }
+    
+                address = next(key for key, value in addressDict.items() if value == Package.address)
 
-                #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
                 if Package.truckID == 1:
                     initTime = truckDepartureTime[1]
                 elif Package.truckID == 2:
@@ -270,7 +278,6 @@ def interface():
                     status =  "delivered"
                         
                 table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
-
             print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
 
         elif selectedNum == 3:

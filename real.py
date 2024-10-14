@@ -26,6 +26,7 @@ def lookUp(package_id):
 
 # time complexity = O(N^3), outer while loop and an inner loop, create queue from list. space complexity = O(N) memory is used for queue
 def deliver(truck):
+    #init queue
     package_queue = deque(truck.packages)
     nextPackage = None
     DeliveryTime = datetime.timedelta(hours=10, minutes=20)
@@ -90,7 +91,7 @@ def load_package_data(hashTable):
                 weight = row[6].strip()
                 special_notes = row[7].strip()
               
-                # get the index of the address
+                # get index of the address
                 address_index = addressDict[address]
                 new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight,
                                       special_notes)
@@ -132,10 +133,6 @@ def inflectionMatrix(matrix):
 distance_matrix = read_distance_data()
 reflected_distance_matrix = inflectionMatrix(distance_matrix)
 
-#print each row in arr. time-space complexity: O(N)
-#for a in distanceData:
-#    print(a)
-
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
 #loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n), space complexity = O(N)
@@ -172,9 +169,14 @@ for c in packageKey3:
 
 truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
 
-deliver(truck1)
-deliver(truck2)
-deliver(truck3)
+#print each row in arr. time-space complexity: O(N)
+#for a in distanceData:
+#    print(a)
+
+def run():
+    deliver(truck1)
+    deliver(truck2)
+    deliver(truck3)
 
 #interface
 def interface():
@@ -236,7 +238,7 @@ def interface():
 
             print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
-          elif selectedNum == 2:
+        elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
             (h, m) = timeStamp.split(':')
             timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
@@ -249,7 +251,7 @@ def interface():
 
             for Package in parsedPackages:
                 p4ckages.append(Package)
-                
+
             status = ""
 
             #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
@@ -278,17 +280,19 @@ def interface():
                     status =  "delivered"
                         
                 table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
+
             print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
 
         elif selectedNum == 3:
-            print("Exiting program.")
+            print("Exiting program...")
             break
 
         else:
             print("Invalid command, please try again.")
 
-
+#main executes what is called within scope
 if __name__ == "__main__":
+    run()
     interface()
 
 

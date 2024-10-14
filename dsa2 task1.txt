@@ -1,5 +1,8 @@
 	Task1 
-A. A greedy algorithm will be used to deliver the packages.
+ID: 011746951
+Name: Thinh Phan
+A. Identify a named self-adjusting algorithm (e.g., nearest neighbor algorithm, greedy algorithm) that could be used in your program to deliver the packages. 
+A greedy algorithm will be used to deliver the packages.
  B. Identify a self-adjusting data structure, such as a hash table, that could be used with the algorithm identified in part A to store the package data. 
 A Dictionary is a self-adjusting data structure that can be used in order to store packages.
 1. Explain how your data structure accounts for the relationship between the data components you are storing.

@@ -1,4 +1,4 @@
-#HashTable class. code referenced from lecture
+#HashTable class. 
 class HashTable:
     def __init__(self, initial_capacity=41):
         # initialize the table with predefined capacity

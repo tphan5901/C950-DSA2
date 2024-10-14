@@ -37,7 +37,7 @@ H.  Provide a screenshot showing successful completion of the code, that include
  
 
 I) Core Algorithm Justification
-The algorithm used to solve the delivery problem is a Greedy Algorithm. The algorithm continuously selects the next package for delivery based on proximity, aiming to minimize the overall distance traveled by the truck. The logic in the code prioritizes delivering the closest package to the truck's current location.
+The Greedy algorithm operates on the principle of making optimal choice that lead to a global optimum. In context of package delivery, the algorithm prioritizes deliveries based on a specific criterion—such as the nearest delivery location—without considering the broader implications of each choice. The algorithm continuously selects the next package for delivery based on proximity, aiming to minimize the overall distance traveled by the truck. The logic in the code prioritizes delivering the closest package to the truck's current location. 
 1. Advantages 
 The greedy algorithm is highly efficient in making local decisions because it always chooses the closest package to deliver next. This helps to minimize unnecessary travel and reduce the total time and distance.
 Simplicity and Speed: The algorithm is straightforward to implement. It iterates over the list of packages on the truck and picks the best package based on the shortest distance. This approach works well, especially when there’s a need to deliver multiple packages with varying time constraints and addresses.

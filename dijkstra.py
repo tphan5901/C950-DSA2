@@ -68,7 +68,7 @@ def deliver(truck):
                     nearest_package = package
         if nearest_package:
             # Move the truck to the nearest package's location and deliver it
-            truck.miles += nearest_distance
+            truck.miles += round(nearest_distance, 1) 
             truck.time += datetime.timedelta(minutes=(nearest_distance / 0.3))
             print(f"Truck {truck.truckID} delivered package {nearest_package.id} at {truck.time}")
             truck.address = nearest_package.address
@@ -78,10 +78,10 @@ def deliver(truck):
     #return to hub
     hub_address = addressDict["4001 South 700 East"]
     distance_to_hub = distanceData[truck.address][hub_address]
-    truck.miles += distance_to_hub
+    truck.miles += round(distance_to_hub, 1)
     truck.time += datetime.timedelta(minutes=(distance_to_hub / 0.3))
     truck.address = hub_address
-
+    truck.miles = float(f"{truck.miles:.1f}")
  
 parsedPackages = []
 
@@ -145,8 +145,8 @@ def read_distance_data():
 
     return distanceData
 
-#Loop array and check for zeroes. asert zeroes equal to length of the column for the perpendicular row. time complexity O(N^2), space complexity = 0(N)
-def inflectionMatrix(matrix):
+#Iterate array and check for zeroes. assert zeroes equal to length of the column for the perpendicular row. time complexity O(N^2), space complexity = 0(N)
+def inflectionMatrix(matrix): 
     size = len(matrix)
     reflectedMatrix = [[0] * size for i in range(size)]
 
@@ -158,7 +158,6 @@ def inflectionMatrix(matrix):
                 reflectedMatrix[i][j] = matrix[i][j]
             else:
                 reflectedMatrix[i][j] = matrix[j][i]
-
     return reflectedMatrix
 
 distance_matrix = read_distance_data()

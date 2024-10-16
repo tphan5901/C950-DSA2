@@ -1,0 +1,150 @@
+	Task1 
+A. Identify a named self-adjusting algorithm (e.g., nearest neighbor algorithm, greedy algorithm) that could be used in your program to deliver the packages. 
+Dijkstra's algorithm will be used to deliver the packages.
+ B. Identify a self-adjusting data structure, such as a hash table, that could be used with the algorithm identified in part A to store the package data. 
+A Dictionary is a self-adjusting data structure that can be used in order to store packages.
+1. Explain how your data structure accounts for the relationship between the data components you are storing.
+A Dictionary stores data as key-value pair. With dictionaries, we can access and change the package location in O(1) time if we know it's value.  The relationship between the dictionary and other data components is important for calculating the shortest path. As the algorithm traverses the graph of package locations , It uses the addresses stored in the dictionary to fetch the next package location. When calculating distances between the truck's current location and the addresses of packages, the algorithm retrieves the corresponding package objects from the dictionary using their keys.
+C. Write an overview of your program in which you do the following:
+1. Explain the algorithm’s logic using pseudocode.
+define shortestPath(truckAddress, packages):
+    distances = {address: int(2000) for address in addressDict.values()
+    distances[truckAddress] = 0
+    pq = [(0, truckAddress)]
+    parent = {address: None for address in addressDict.values()}
+    while pq:
+        currentDistance, currentAddress = heapq.heappop(pq)
+        if currentDistance > distances[currentAddress]:
+            continue
+        for package in packages:
+            distance_to_next = distanceData[currentAddress][package.address]
+            newDistance = current_distance + distance_to_next
+            if newDistance < distances[package.address]:
+                distances[package.address] = new_distance
+                heapq.heappush(pq, (newDistance, package.address))
+                parent[package.address] = currentAddress
+    return distances, parent
+
+Initiate the priority queue with a tuple of (0, truckAddress). This indicates the distance to the starting address is 0. Initialize the parent dictionary with None for all addresses. The algorithm continues to execute while there are nodes in the priority queue. Extract the Node with the minimum distance. The heapq.heappop() function retrieves the address with the smallest distance from the priority queue and stores the distance and address in current distance and current address. If the current distance is greater than the recorded distance for current address in the distances dictionary, it means this node has already been processed with a smaller distance, so the algorithm continues to the next iteration. For each package in the package list. Calculate the distance to the next package by inititating a new variable then assigning it distanceData[currentaddress][package.address], which retrieves the weighted edge from the current address to the package address. Calculate the new potential distance as the sum of current distance and distance to the next. If new distance is less than the currently recorded distance for package.address, update the distances dictionary with the new shorter distance. Push the updated distance and address into the priority queue then update the parent dictionary for the package address to record the current address as its predecessor. Once all nodes have been processed, the function returns the distances dictionary with the shortest distances from the truck_address to all other addresses and the parent dictionary.
+
+2.  Describe the programming environment you will use to create the Python application, including both the software and hardware you will use. 
+Programming environment: Windows 11 OS, VSCode IDE , IDE Terminal, Tabulate python package. Python version 3.8. Intel i5 10th gen CPU, 12GB DDR4 Ram, M.2 SSD 500gb.
+3. Evaluate the space-time complexity of each major segment of the program and the entire program using big-O notation. 
+- The hash table has an insertion time of O(1). Dijkstra's algorithm has a time complexity of O(ElogV) where v represents the vertices(addresses) and E represents the edges(distances), space complexity of O(V), where 𝑉 is the number of addresses (vertices) in the graph represented by addressDict. Deliver() has a time-complexity of O(N^3) since it loops in order to create a queue by reading from the package list. The method has an inner while loop with a subsequent for loop. space complexity of O(N) from the initiated double ended queue. readAddresses() , readDistances() , readPackages() has a time complexity of O(N) which is dependant on the size of the csv files. Interface() has a complexity of O(n) as it loops the package list in order to retrieve the package so the program can display the information. Overall the program has a space-time complexity of O(n^2).
+4. Explain the capability of your solution to scale and adapt to a growing number of packages. 
+The program relies on an external lookUp method, data structure (distanceData) for calculating distances. This design allows flexibility if data retrieval or distance methods needs to be changed. More extensive error handling can improve maintainability by making the system robust against unexpected input. Currently, the system operates in a single-threaded manner, processing one truck’s deliveries at a time. For scalability, parallelism could be introduced to process multiple trucks / packages concurrently, making the system more responsive to larger datasets. Refactoring the system to automatically handle additional trucks based on load would enhance scalability.
+5. Discuss why the software design would be efficient and easy to maintain.
+The code is modular, each function handles a specific part of the logic, such as loadAddresses(), loadPackages(). This separation of concerns makes it easier to maintain individual pieces without affecting the entire system. The program is straightforward to use with an implementation of terminal interface. Calculations are performed in the background and stored within class objects. Useful functions are implemented, that are accessible through dot operators. It maintainable , using basic programming principles , there are comments throughout the program explaining the code structure. Print statements on initialized memory structures are performed to verify data integrity.
+ 6. Describe both the strengths and weaknesses of the self-adjusting data structure (e.g., the hash table). 
+Dictionaries provide a more organized way to manage key-value pairs. However, they can encounter issues with hash collisions as more addresses are added, leading to slow lookups. When multiple values hash to the same bucket, it results in decreased performance.
+D.  Provide an intuitive interface for the user to view the delivery status (including the delivery time) of any package at any time and the total mileage traveled by all trucks.  
+def interface():
+    print('WGUPS Delivery Service')
+    print('**********************')
+    total_miles = round(truck1.miles + truck2.miles + truck3.miles, 2)
+    print(f"Route completed in: {total_miles} miles")
+    print(f"Truck 1 miles: {truck1.miles}")
+    print(f"Truck 2 miles: {truck2.miles}")
+    print(f"Truck 3 miles: {truck3.miles}")
+    print('**********************')
+    while True:
+        print("\nEnter a command (1-3):")
+        print("1. Display specific package")
+        print("2. Display all package status")
+        print("3. Exit")
+        selectedNum = int(input())
+        if selectedNum == 1:
+            packageId = input('Enter a Package ID (1-40): ')
+            timeStamp = input('Enter a time in HH:MM format: ')
+            (h, m) = timeStamp.split(':')
+            timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
+            mg = ''
+            truckDepartureTime = {
+                1: datetime.timedelta(hours=8, minutes=0),
+                2: datetime.timedelta(hours=9, minutes=10),
+                3: datetime.timedelta(hours=10, minutes=0)
+            }
+            if tempStorage.truckID == 1:
+                initTime = truckDepartureTime[1]
+            elif tempStorage.truckID == 2:
+                initTime = truckDepartureTime[2]
+            elif tempStorage.truckID == 3:
+                initTime = truckDepartureTime[3]
+
+            print('Delivery time', tempStorage.time_delivered)
+            print('Departure time', initTime)
+
+            if timeStamp <= initTime:
+                mg = "at hub"
+            elif initTime < timeStamp < tempStorage.time_delivered:
+                mg =  "en route"
+            elif timeStamp >= tempStorage.time_delivered:
+                mg =  "delivered"
+            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+        elif selectedNum == 2:
+            timeStamp = input('Enter a time in HH:MM format: ')
+            (h, m) = timeStamp.split(':')
+            timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
+            print(f"Status of packages at {timeStamp}:")
+            table_data = []
+            p4ckages = []
+
+            for Package in parsedPackages:
+                p4ckages.append(Package)
+            status = ""
+            for Package in p4ckages:
+                msg = ''
+                truckDepartureTime = {
+                1: datetime.timedelta(hours=8, minutes=0),
+                2: datetime.timedelta(hours=9, minutes=5),
+                3: datetime.timedelta(hours=10, minutes=0)
+                }
+                address = next(key for key, value in addressDict.items() if value == Package.address)
+                if Package.truckID == 1:
+                    initTime = truckDepartureTime[1]
+                elif Package.truckID == 2:
+                    initTime = truckDepartureTime[2]
+                elif Package.truckID == 3:
+                    initTime = truckDepartureTime[3]
+                if timeStamp <= initTime:
+                    status = "at hub"
+                elif initTime < timeStamp < Package.time_delivered:
+                    status = "en route"
+                elif timeStamp >= Package.time_delivered:
+                    status =  "delivered"
+                table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
+            print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
+        elif selectedNum == 3:
+            print("Exiting program...")
+            break
+        else:
+            print("Invalid command, please try again.")
+#main
+if __name__ == "__main__":
+    interface()
+
+1.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 8:35 a.m. and 9:25 a.m. 
+2.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 9:35 a.m. and 10:25 a.m. 
+3.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 12:03 p.m. and 1:12 p.m. 
+
+E.  Provide screenshots showing successful completion of the code that includes the total mileage traveled by all trucks. 
+ 
+
+F.  Justify the package delivery algorithm used in the solution as written in the original program by doing the following: 
+1.  Describe two or more strengths of the algorithm used in the solution. 
+In scenarios where there are few edges compared to the number of vertices. It calculates the shortest path from the truck's starting address to the various package addresses, which forms a graph with addresses as nodes and distances as edges. Using a priority queue allows the algorithm to efficiently extract the node with the smallest distance, that way the algorithm processes nodes in the order of their proximity to the starting point. This results in faster performance as it avoids unnecessary checks of nodes that are not optimal candidates for the shortest path. The algorithm is designed to update the shortest paths dynamically as it processes each node. Each time a shorter path to a package address is found, the program updates the distances.
+2.  Verify that the algorithm used in the solution meets all requirements in the scenario. 
+Special conditions: The program addresses specific conditions, such as handling package#9, which requires a different delivery address if delivered after 10:20 AM. The code checks the time (if package.id == '9' and truck.time > DeliveryTime) and dynamically adjusts the delivery address while delivering packages under 140miles.
+3.  Identify two other named algorithms that are different from the algorithm implemented in the solution and would meet all requirements in the scenario. 
+Prim's Algorithm and Nearest Neighbor. 
+a.  Describe how both algorithms identified in part F3 are different from dijkstra used in the solution. 
+- Nearest Neighbor does not find the shortest path between nodes; instead, it constructs a tour by visiting each vertex in a greedy manner, based solely on the nearest neighbor at each step. Dijkstra's algorithm computes the shortest path to each vertex from a source, while the Nearest Neighbor algorithm aims to create a complete tour that visits every vertex once.
+- Prim’s algorithm focuses on constructing a minimum spanning tree, while Dijkstra’s algorithm aims to find the shortest path from a source vertex to all other vertices in a weighted graph. In Prim's, the algorithm grows the MST by always choosing the minimum edge that connects a vertex in the tree to a vertex outside it. In contrast, Dijkstra's algorithm selects the vertex with the smallest known distance to expand the path, updating distances based on this selection. Prim's can be used on dense graphs, while Dijkstra’s is better suited for sparse graphs, particularly when edge weights are non-negative.
+H.  Describe what you would do differently, other than the two algorithms identified in part F3, if you did this project again, including details of the modifications that would be made. 
+A control structure would likely have been implemented to determine the appropriate truck assignment for packages based on delivery deadlines and special notes. This conditional logic allows the program to scale as additional packages are added and automates the process of handling packages without manually adding them onto the trucks. This logic will likely be implemented within the def function which parses the csv file.
+1. Identify two other data structures that coul meet the same requirements in the scenario  
+A doubly linked list and a adjacency marix data structure could have also met the requirements for the scenario. 
+a.  Describe how each data structure identified in H1 is different from the data structure used in the solution. 
+A doubly linked list is a linear data structure where each node contains a reference to both the next and previous node. This allows traversal in both directions, making it more flexible than a singly linked list. Each node stores data and two pointers, one pointing to the next node and another to the previous node.
+An adjacency matrix requires O(V2)space, where V is the number of vertices. This can be inefficient for sparse graphs as it allocates space for all possible edges. Verifying for edge cases between two vertices is O(1) time complexity. However, Dijkstra algorithm, uses a more dynamic structure to store edges (Lists) which may offer better space efficiency for sparse graphs.
+I. References: Hashtable implementation sourced from webinar

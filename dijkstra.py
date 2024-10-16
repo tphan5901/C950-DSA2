@@ -6,7 +6,7 @@ from hash import *
 from package import *
 from truck import *
 from collections import deque
-from tabulate import tabulate
+from tabulate import tabulate #used to organize data into tables in interface(), [pip install tabulate] in the CLI b4 running my code
 import heapq
 
 #returns distance between two weights. time complexity = O(N)
@@ -14,73 +14,73 @@ def heuristic(start, end):
     return abs(start - end)
 
 #returns list of neighbor nodes. time complexity = O(1)
-def get_neighbors(graph, node):
+def getNeighbors(graph, node):
     return graph[node]
 
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
-def lookUp(package_id):
+def lookUp(packageID):
     for package in parsedPackages:
-        if package.id == package_id:
+        if package.id == packageID:
             return package
     return None
 
-#The time complexity is 𝑂(𝑉2) * 𝑂(𝑉2)  where V is the number of vertices. With a priority queue, the complexity can be improved to 𝑂((𝑉+𝐸)log𝑉)O((V+E)logV), where 𝐸E is the number of edges.
-def dijkstra(truck_address, packages):
+#The time complexity is 𝑂(ElogV), where 𝐸 is the number of edges.
+def dijkstra(truckAddress, packages):
     distances = {address: float('inf') for address in addressDict.values()}
-    distances[truck_address] = 0
+    distances[truckAddress] = 0
     #Queue to keep track of distances
-    priority_queue = [(0, truck_address)]
+    priorityQueue = [(0, truckAddress)]
     parent = {address: None for address in addressDict.values()}
 
-    while priority_queue:
-        current_distance, current_address = heapq.heappop(priority_queue)
+    while priorityQueue:
+        currentDistance, currentAddress = heapq.heappop(priorityQueue)
         # If the current node has already been visited skip
-        if current_distance > distances[current_address]:
+        if currentDistance > distances[currentAddress]:
             continue
         for package in packages:
-            distance_to_next = distanceData[current_address][package.address]
-            new_distance = current_distance + distance_to_next
-            if new_distance < distances[package.address]:
-                distances[package.address] = new_distance
-                heapq.heappush(priority_queue, (new_distance, package.address))
-                parent[package.address] = current_address
+            nextDistance = distanceData[currentAddress][package.address]
+            newDistance = currentDistance + nextDistance
+            if newDistance < distances[package.address]:
+                distances[package.address] = newDistance
+                heapq.heappush(priorityQueue, (newDistance, package.address))
+                parent[package.address] = currentAddress
     return distances, parent
 
-#time complexity is 𝑂(𝑁)⋅(𝑂(𝑁2)+𝑂(𝑁))=𝑂(𝑁3)O(N)⋅(O(N2)+O(N))=O(N3). Outer while loop and an inner loop, loop through list and add the packages. third loop creates the queue from truck packages
-# space complexity = O(N) memory is used for DEqueue and shortestPaths, both of which are 𝑂(N).
+#Time complexity is O(N^3). Outer while loop and an inner loop, loop through list and add the packages. third loop creates the queue from truck packages
+#Space complexity = O(N) memory is used for DEqueue and shortestPaths, both of which are 𝑂(N).
 def deliver(truck):
-    package_queue = deque(truck.packages)
+    dequeue = deque(truck.packages)
     DeliveryTime = datetime.timedelta(hours=10, minutes=20)
 
-    while package_queue:
-        shortest_paths, _ = dijkstra(truck.address, [lookUp(pid) for pid in package_queue])
-        nearest_package = None
-        nearest_distance = float('infinity')
-        for package_id in package_queue:
-            package = lookUp(package_id)
+    while dequeue:
+        shortestPaths, _ = dijkstra(truck.address, [lookUp(pid) for pid in dequeue])
+        nextPackage = None
+        nearestDistance = float('infinity')
+        for packageID in dequeue:
+            package = lookUp(packageID)
             if package:
                 # Special case for package 9
                 if package.id == '9' and truck.time > DeliveryTime:
                     package.address = addressDict["410 S State St"]
-                distance_to_package = shortest_paths[package.address]
-                if distance_to_package < nearest_distance:
-                    nearest_distance = distance_to_package
-                    nearest_package = package
-        if nearest_package:
-            # Move the truck to the nearest package's location and deliver it
-            truck.miles += round(nearest_distance, 1) 
-            truck.time += datetime.timedelta(minutes=(nearest_distance / 0.3))
-            print(f"Truck {truck.truckID} delivered package {nearest_package.id} at {truck.time}")
-            truck.address = nearest_package.address
-            nearest_package.time_delivered = truck.time
-            nearest_package.truckID = truck.truckID
-            package_queue.remove(nearest_package.id)
+                distance_to_package = shortestPaths[package.address]
+                if distance_to_package < nearestDistance:
+                    nearestDistance = distance_to_package
+                    nextPackage = package
+        if nextPackage:
+            # Move truck to the nearest package's location and deliver it
+            truck.miles += round(nearestDistance, 1) 
+            truck.time += datetime.timedelta(minutes=(nearestDistance / 0.3))
+            #print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
+            truck.address = nextPackage.address
+            nextPackage.time_delivered = truck.time
+            nextPackage.truckID = truck.truckID
+            dequeue.remove(nextPackage.id)
     #return to hub
-    hub_address = addressDict["4001 South 700 East"]
-    distance_to_hub = distanceData[truck.address][hub_address]
+    hub = addressDict["4001 South 700 East"]
+    distance_to_hub = distanceData[truck.address][hub]
     truck.miles += round(distance_to_hub, 1)
     truck.time += datetime.timedelta(minutes=(distance_to_hub / 0.3))
-    truck.address = hub_address
+    truck.address = hub
     truck.miles = float(f"{truck.miles:.1f}")
  
 parsedPackages = []
@@ -145,23 +145,7 @@ def read_distance_data():
 
     return distanceData
 
-#Iterate array and check for zeroes. assert zeroes equal to length of the column for the perpendicular row. time complexity O(N^2), space complexity = 0(N)
-def inflectionMatrix(matrix): 
-    size = len(matrix)
-    reflectedMatrix = [[0] * size for i in range(size)]
-
-    for i in range(size):
-        for j in range(size):
-            if i == j:
-                reflectedMatrix[i][j] = 0
-            elif i < j:
-                reflectedMatrix[i][j] = matrix[i][j]
-            else:
-                reflectedMatrix[i][j] = matrix[j][i]
-    return reflectedMatrix
-
 distance_matrix = read_distance_data()
-#reflected_distance_matrix = inflectionMatrix(distance_matrix)
 
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
@@ -240,7 +224,6 @@ def interface():
             tempStorage = lookUp(packageId)
             
             #based on package's truck ID, assign a time when the truck leaves hub and based on timestamp user enters and based on condition, return a msg value. O(1)
-
             mg = ''
             truckDepartureTime = {
                 1: datetime.timedelta(hours=8, minutes=0),
@@ -310,7 +293,6 @@ def interface():
                     status =  "delivered"
                         
                 table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
-
             print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
 
         elif selectedNum == 3:
@@ -320,7 +302,7 @@ def interface():
         else:
             print("Invalid command, please try again.")
 
-#main executes what is called within scope
+#main
 if __name__ == "__main__":
     run()
     interface()

@@ -8,14 +8,7 @@ from truck import *
 from collections import deque
 from tabulate import tabulate #used to organize data into tables in interface(), [pip install tabulate] in the CLI b4 running my code
 import heapq
-
-#returns distance between two weights. time complexity = O(N)
-def heuristic(start, end):
-    return abs(start - end)
-
-#returns list of neighbor nodes. time complexity = O(1)
-def getNeighbors(graph, node):
-    return graph[node]
+from colorama import Fore, Style
 
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
 def lookUp(packageID):
@@ -47,7 +40,7 @@ def dijkstra(truckAddress, packages):
     return distances, parent
 
 #Time complexity is O(N^3). Outer while loop and an inner loop, loop through list and add the packages. third loop creates the queue from truck packages
-#Space complexity = O(N) memory is used for DEqueue and shortestPaths, both of which are 𝑂(N).
+#Space complexity = O(N) memory is used for dequeue and shortestpath, both of which are 𝑂(N).
 def deliver(truck):
     dequeue = deque(truck.packages)
     DeliveryTime = datetime.timedelta(hours=10, minutes=20)
@@ -70,7 +63,7 @@ def deliver(truck):
             # Move truck to the nearest package's location and deliver it
             truck.miles += round(nearestDistance, 1) 
             truck.time += datetime.timedelta(minutes=(nearestDistance / 0.3))
-            #print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
+            print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
             truck.address = nextPackage.address
             nextPackage.time_delivered = truck.time
             nextPackage.truckID = truck.truckID
@@ -94,7 +87,7 @@ distanceData = []
 #dictionary initilized 
 addressDict = {}
 
-#open csv file then add all row to the initialized dictionary as key-val pairs. time complexity O(N), space complexity O(N) where n is the exponential number of rows
+#Parse csv file then add all row to the initialized dictionary as key-val pairs. Time complexity O(N)
 def loadAddresses():
     with open('WGUPS_Addresses.csv',  encoding='utf-8-sig') as file:
         reader = csv.reader(file)
@@ -106,7 +99,7 @@ def loadAddresses():
 loadAddresses()
 #print(addressDict) 
 
-#open csv file and add every row from the file to the initialized data structure. time complexity O(N), space complexity O(N) where n is the exponential number of rows
+#open csv file and add every row from the file to the initialized data structure. Time complexity O(N)
 def load_package_data(hashTable):
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
@@ -184,8 +177,8 @@ for c in packageKey3:
 truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
 
 #print each row in arr. time-space complexity: O(N)
-#for a in distanceData:
-#    print(a)
+for a in distanceData:
+    print(a)
 
 def run():
     deliver(truck1)
@@ -224,6 +217,7 @@ def interface():
             tempStorage = lookUp(packageId)
             
             #based on package's truck ID, assign a time when the truck leaves hub and based on timestamp user enters and based on condition, return a msg value. O(1)
+
             mg = ''
             truckDepartureTime = {
                 1: datetime.timedelta(hours=8, minutes=0),
@@ -238,7 +232,7 @@ def interface():
             elif tempStorage.truckID == 3:
                 initTime = truckDepartureTime[3]
             
-            print('Delivery time', tempStorage.time_delivered)
+            print('Time delivered: ', tempStorage.time_delivered)
             print('Departure time', initTime)
 
             if timeStamp <= initTime:
@@ -249,7 +243,7 @@ def interface():
                 mg =  "delivered"
 
 
-            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDeliver By: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
         elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
@@ -291,9 +285,10 @@ def interface():
                     status = "en route"
                 elif timeStamp >= Package.time_delivered:
                     status =  "delivered"
-                        
+            
                 table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
-            print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
+
+            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Delivery Deadline", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
 
         elif selectedNum == 3:
             print("Exiting program...")

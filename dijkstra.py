@@ -201,7 +201,12 @@ def interface():
         print("1. Display specific package")
         print("2. Display all package status")
         print("3. Exit")
-        selectedNum = int(input())
+        
+        try:
+            selectedNum = int(input())
+        except ValueError:
+            print("Invalid input. Please enter a number between 1 and 3.")
+            continue 
 
         if selectedNum == 1:
             packageId = input('Enter a Package ID (1-40): ')

@@ -73,7 +73,6 @@ def deliver(truck):
     truck.miles = float(f"{truck.miles:.1f}")
 
 
- 
 parsedPackages = []
 
 # hash table
@@ -209,11 +208,11 @@ def interface():
         if selectedNum == 1:
             packageId = input('Enter a Package ID (1-40): ')
             while True:
-                timeStamp = input('Enter a time in HH:MM format (after 08:00): ')
+                timeStamp = input('Enter a time in HH:MM format: ')
                 try:
                     (h, m) = map(int, timeStamp.split(':'))
                     if h < 8 or h > 13 or m < 0 or m > 59:
-                        print("Invalid time. Please enter a time after 08:00 in HH:MM format.")
+                        print("Invalid time. Please enter a time HH:MM format.")
                         continue
                     timeStamp = datetime.timedelta(hours=h, minutes=m)
                     break 
@@ -253,8 +252,8 @@ def interface():
             elif timeStamp >= tempStorage.time_delivered:
                 mg =  "delivered"
 
-
-            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDeliver By: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+            address = next(key for key, value in addressDict.items() if value == tempStorage.address)
+            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDeliver at: {tempStorage.time_delivered} \nDeliver to: {address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
         elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
@@ -297,9 +296,9 @@ def interface():
                 elif timeStamp >= Package.time_delivered:
                     status =  "delivered"
             
-                table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
+                table_data.append([Package.id, address, status, Package.time_delivered, Package.truckID])
 
-            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Delivery Deadline", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
+            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Deliver by", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
 
         elif selectedNum == 3:
             print("Exiting program...")

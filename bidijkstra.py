@@ -34,7 +34,7 @@ def lookUp(packageID):
     return None
 
 # Time complexity: O(E log V), where E is edges and V is vertices. Space complexity: O(N).
-def deliver(truck):
+def dijkstra(truck):
     truck.departure_time = truck.time
     dequeue = deque(truck.packages) 
     DeliveryTime = datetime.timedelta(hours=10, minutes=20)
@@ -196,9 +196,9 @@ truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.t
 #    print(a)
 
 def run():
-    deliver(truck1)
-    deliver(truck2)
-    deliver(truck3)
+    dijkstra(truck1)
+    dijkstra(truck2)
+    dijkstra(truck3)
 
 #interface
 def interface():

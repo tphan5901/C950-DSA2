@@ -4,11 +4,27 @@ import csv
 import datetime
 from hash import *
 from package import *
-from truck import *
 from collections import deque
 from tabulate import tabulate #[pip install tabulate] in the CLI b4 running my code
 import heapq
 from colorama import Fore, Style
+
+#truck class object
+class Truck:
+    def __init__(self, packages, address, miles, time, truckID):
+        self.packages = packages
+        self.address = address
+        self.miles = miles
+        self.time = time
+        self.truckID = truckID
+        self.return_time = None   
+    def __str__(self):
+        return (f"Truck ID: {self.truckID}, "
+                f"Current Address: {self.address}, "
+                f"Total Miles Driven: {self.miles:.2f}, "
+                f"Total Time: {self.time}, "
+                f"Packages: {', '.join(str(package) for package in self.packages)}")
+
 
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
 def lookUp(packageID):
@@ -19,12 +35,13 @@ def lookUp(packageID):
 
 # Time complexity: O(E log V), where E is edges and V is vertices. Space complexity: O(N).
 def deliver(truck):
+    truck.departure_time = truck.time
     dequeue = deque(truck.packages) 
     DeliveryTime = datetime.timedelta(hours=10, minutes=20)
     distances = {address: float('inf') for address in addressDict.values()}
     distances[truck.address] = 0
     priorityQueue = [(0, truck.address)]  
-
+    #while packages enqueue
     while dequeue:
         visited = set()
         while priorityQueue:
@@ -56,22 +73,23 @@ def deliver(truck):
         if nextPackage:
             truck.miles += round(nearestDistance, 1)  
             truck.time += datetime.timedelta(minutes=(nearestDistance / 0.3))  
-            print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
+           #print(f"Truck {truck.truckID} delivered package {nextPackage.id} at {truck.time}")
             truck.address = nextPackage.address  
             nextPackage.time_delivered = truck.time  
             nextPackage.truckID = truck.truckID 
+            #remove package after delivery
             dequeue.remove(nextPackage.id)  
             distances = {address: float('inf') for address in addressDict.values()}
             distances[truck.address] = 0
             priorityQueue = [(0, truck.address)]
-    # Return to hub
+    # return to hub
     hub = addressDict["4001 South 700 East"]
     distance_to_hub = distanceData[truck.address][hub]
     truck.miles += round(distance_to_hub, 1)
     truck.time += datetime.timedelta(minutes=(distance_to_hub / 0.3)) 
     truck.address = hub
     truck.miles = float(f"{truck.miles:.1f}")
-
+    truck.return_time = truck.time
 
 parsedPackages = []
 
@@ -174,8 +192,8 @@ for c in packageKey3:
 truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
 
 #print each row in arr. time-space complexity: O(N)
-for a in distanceData:
-    print(a)
+#for a in distanceData:
+#    print(a)
 
 def run():
     deliver(truck1)
@@ -184,6 +202,11 @@ def run():
 
 #interface
 def interface():
+    print(f"\nTruck 1 departed at: {truck1.departure_time} and returned at: {truck1.return_time}")
+    print(f"Truck 2 departed at: {truck2.departure_time} and returned at: {truck2.return_time}")
+    print(f"Truck 3 departed at: {truck3.departure_time} and returned at: {truck3.return_time}")
+    print("")
+
     print('WGUPS Delivery Service')
     print('**********************')
     total_miles = round(truck1.miles + truck2.miles + truck3.miles, 2)
@@ -297,7 +320,6 @@ def interface():
                     status =  "delivered"
             
                 table_data.append([Package.id, address, status, Package.time_delivered, Package.truckID])
-
             print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Deliver by", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
 
         elif selectedNum == 3:

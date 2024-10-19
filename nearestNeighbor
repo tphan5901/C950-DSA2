@@ -1,5 +1,4 @@
 #studentID: O11746951
-#Thinh Phan
 import csv
 import datetime
 from hash import *

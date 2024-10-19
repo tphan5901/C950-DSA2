@@ -1,43 +1,77 @@
 	Task1 
 A. Identify a named self-adjusting algorithm (e.g., nearest neighbor algorithm, greedy algorithm) that could be used in your program to deliver the packages. 
-Nearest neighbor algorithm will be used to deliver the packages.
+GA will be used to deliver the packages.
  B. Identify a self-adjusting data structure, such as a hash table, that could be used with the algorithm identified in part A to store the package data. 
 A Dictionary can be used in order to store the addresses.
 1. Explain how your data structure accounts for the relationship between the data components you are storing.
-A Dictionary stores data as key-value pair. With dictionaries, we can access and update the location in O(1) time if we know it's value.  The relationship between the dictionary and other data components is important for calculating the shortest path. As the algorithm traverses the graph of package locations , It uses the addresses stored in the dictionary to fetch the next package location. When calculating distances between the truck's current location and the addresses of packages, the algorithm retrieves the corresponding package object from the dictionary using their keys.
+A Dictionary stores data as key-value pair. With dictionaries, we can access and update the addresses in O(1) time if we know it's value. The relationship between the dictionary and other data components is important for mapping truckIDs to their corresponding routes, enabling quick lookups. Dictionaries can also easily add, update, or remove entries as data changes. If a new package is added, we can update the dictionary without restructuring the entire dataset.
 C. Write an overview of your program in which you do the following:
 1. Explain the algorithm’s logic using pseudocode.
-define getdistance(truck_address_index, package_address_index)
-        distance = distanceData[truck_address_index][package_address_index]
-        IF distance is empty
-            distance = distanceData[package_address_index][truck_address_index]
-        RETURN float(distance)
+define getdistance(truckaddress, packageaddress):
+        distance = distanceData[truckaddress][packageaddress]
+ 
+addressdict= {}
+distanceData = []
+POPULATION_SIZE: 100 
+MUTATION_RATE: 0.01
+GENERATIONS: 100
 
-define deliver(truck)
-    INIT packageQueue as deque containing truck.packages
+define totaldistance(route, truck):
+      totaldistance = 0
+      currentAddress = truck.address
+    FOR each package_id in route:
+           if package exists:
+            totaldistance += getdistance(currentAddress, package.address)
+            currentAddress = package.address
+    totaldistance += getdistance(currentAddress, addressDict["At the hub"])
+    return totaldistance
 
-    WHILE packagQueue is not empty
-        SET nextPackage to None
-        SET nextdistance to infinity
+define population(truckpackages):
+    population = empty list
+    for i from 1 - POPULATION_SIZE:
+        route = copy truckpackages
+        random shuffle route
+        population.append(route)
+    return population
 
-        FOR each pkgid in package_queue
-            package = lookUp(pkgid)
-            distance = get_distance(truck.address, package.address)
-            IF distance < closest_distance
-                nextdistance = distance
-                nextPackage = package
+define inheritance(parent1, parent2):
+    size = len(parent1)
+    child = list of None values of size
+    start, end = random indices in the range of size (2)
+    child[start:end] = parent1[start:end]
+    SET p2 = 0
+    for i FROM 0 of size:
+        if child[i] is empty:
+            while parent2[p2] is in child:
+                p2_pointer += 1
+            child[i] = parent2[p2]
+    return child
 
-        IF nextPackage is not None
-            truck.miles += nextdistance
-            truck.time += (nextdistance / 0.3) minutes
-            truck.address = nextPackage.address
-            nextPackage.time_delivered = truck.time
-            nextPackage.truckID = truck.truckID
+define mutation(route):
+    if random value < mutation_rate:
+         i, j = in the range of route
+        swap route[i] with route[j]
+    return route
 
-    hub_address_index = addressDict["4001 South 700 East"]
-    distance_to_hub = get_distance(truck.address, hub_address_index)
+define selection(population, truck):
+    sort population by calculatetotal()
+    return top[:50] of sort population
 
-Get distance function calculates the distance (edge weight) between two addresses: the truck's current address and next package address. If the distance is empty, it retrieves the distance in the opposite direction. In deliver(), a double-ended queue is created to hold the packages the truck is scheduled to deliver. The function enters a loop that continues until all packages are delivered. Inside the loop, it initializes variables to track the next package to deliver and the closest distance found. It iterates over each package in the queue, retrieves the package details using the a look-up functon and gets the distance to that package using getdistance(). If the calculated distance is less than next distance, it updates next distance and sets nextPackage to the current package. After checking all packages If a nextPackage has been found, the truck's mileage and time are updated based on the distance to that package. The delivered package is removed from the package_queue, and the truck's address is updated to the address of the delivered package. Once all packages are delivered, the truck returns back to the hub.
+define bestroute(truck):
+    set population = populate(truck.packages)
+    for generation from 1 to GENERATIONS:
+        selected = selection(population, truck)
+        nextpopulation = []
+        for i FROM 1 TO POPULATION_SIZE:
+            parent1, parent2 = random.(selected, for i in range (2))
+            child = inherit(parent1, parent2)
+            child = mutate(child)
+            nextpopulation.append(child)
+        population = nextpopulation
+    route = route with min(population)
+    return route
+
+getdistance() retrieves the edge weight between two addresses (truck's current location & package's location) from a distance matrix. population size, mutation_rate, generations are parameters to configure the algorithm. Totaldistance method calculates the total distance for a given route. It initializes totaldistance to zero and starts at the truck's initial address. Population function initializes the population of routes by generating random routes. It creates an empty list for the population. For each individual in the population, it makes a copy of the truck's packages and shuffles them randomly to create a new route. Each route is added to the population list. inheritance method creates a child route by combining routes from two parents. It creates a child list and randomly selects two points to copy from parent1. For each empty spot in the child route, it adds a non-duplicate package from parent2. Mutation method introduces random changes to a route to maintain diversity. If a randomly generated number is less than the mutation rate, it selects two random indices in the route and swaps the packages at those positions. Selection method sorts the population based on the objective function (total distance). It retains the top 50% of routes. The main function runs to find the best delivery route. It initializes the population with random routes based on the truck's packages. For each generation, it selects the best routes, creates a new population through inheritance and mutation, and repeats the process. After all generations are processed, it finds the route with the minimum total distance.
 
 2.  Describe the programming environment you will use to create the Python application, including both the software and hardware you will use. 
 Software: Windows 11 OS, VSCode IDE , IDE Terminal, Tabulate python package, Colorama package. Python version 3.8
@@ -155,16 +189,16 @@ E.  Provide screenshots showing successful completion of the code that includes 
 
 F.  Justify the package delivery algorithm used in the solution as written in the original program by doing the following: 
 1.  Describe two or more strengths of the algorithm used in the solution. 
-The algorithm uses a greedy approach by selecting the nearest package to deliver next. This minimizes the distance traveled for each delivery, which is beneficial for reducing travel time. By always opting for the closest package, the algorithm can make decisions without having to evaluate all possible routes. Nearest neighbor is also straightforward and easy to understand. It relies on basic data structures [queues,lists,dictionaries]. There are helper methods that calculate next edge weight this makes the program more accessible and easy to debug. 
+GA can evaluate multiple routes which increases the likelihood of finding optimal solutions. This is useful for package delivery where the number of routes can grow exponentially. GA is able to adapt over time which makes the algorithm adaptable against changes in input data, such as variations in the number of packages. If a new package is added or an address needs to be altered, the algorithm can quickly re-evaluate and optimize the routes without requiring a rewrite of the system. GA also uses concepts like crossover to introduce diversity into the population. This increases the chances of escaping local optima and finding more optimal routes.
 2.  Verify that the algorithm used in the solution meets all requirements in the scenario. 
 Special conditions: The program addresses specific conditions, such as handling package#9, which requires a different delivery address if delivered after 10:20 AM. The code checks the time (if package.id == '9' and truck.time > DeliveryTime) and dynamically adjusts the delivery address while delivering packages under 140miles.
 3.  Identify two other named algorithms that are different from the algorithm implemented in the solution and would meet all requirements in the scenario. 
-Prim's Algorithm and Genetic Algorithm. 
+Prim's Algorithm and Nearest Neighbor. 
 a.  Describe how both algorithms identified in part F3 are different from nearest neighbor used in the solution. 
-- Genetic operates on a population of candidate(edge weights) represented as chromosomes. Each address undergoes processes such as selection, crossover, and mutation to produce offspring. Selected routes is evaluated based on a defined objective (e.g., distance traveled). Nearest Neighbor aims to create a complete route by choosing the next unvisited neighbor until it reaches the last node.
--Prim's algorithm constructs a Minimum Spanning Tree for a weighted graph by starting from an random vertex then adding the minimum weight edge that connects a vertex within a tree to a vertex outside it. It is generally used in scenarios for problems like network design. Nearest Neighbor is typically applied in routing problems, where each vertex should be visited once.
+- Nearest Neighbor starts at a given vertex and iteratively visits the nearest unvisited vertex until all vertices have been visited, then returns to the starting vertex.The Algorithm makes locally optimal choices at each step to finding a global optimum. In contrast, genetic looks at multiple potential solutions simultaneously and can escape local optima through concepts like crossover and mutation. While the Nearest Neighbor is faster and simpler to implement, it can produce suboptimal solutions, especially for larger datasets. While GA tends to produce better solutions over time, but requires more computational resource.
+-Prim's algorithm constructs a Minimum Spanning Tree for a weighted graph by starting from an random vertex then adding the minimum weight edge that connects a vertex within a tree to a vertex outside it. It is generally used in scenarios for problems like network design. Prim's Algorithm runs in O(E log V) time, where E is the number of edges and V is the number of vertices, making it efficient for dense graphs. GA does require more significant amount of computational time depending on the population size and number of generations.
 H.  Describe what you would do differently, other than the two algorithms identified in part F3, if you did this project again, including details of the modifications that would be made. 
-A control structure would likely have been implemented to determine the appropriate truck assignment for packages based on delivery deadlines and special notes. This conditional logic allows the program to scale as additional packages are added and automates the process of handling packages without manually adding them onto the trucks. This logic will likely be implemented within the def function which parses the csv file.
+A control structure would likely have been implemented to determine the appropriate truck assignment for packages based on delivery deadlines and special notes. This conditional logic allows the program to scale as additional packages are added and automates the process of handling packages without manually adding them onto the trucks. This logic would likely be implemented within the method which parses the csv file.
 1. Identify two other data structures that could meet the same requirements in the scenario  
 A doubly linked list and An Adjacency matrix 
 a.  Describe how each data structure identified in H1 is different from the data structure used in the solution. 

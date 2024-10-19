@@ -38,8 +38,6 @@ def get_distance(truck_address_index, package_address_index):
         print(f"Index error: truck_address_index={truck_address_index}, package_address_index={package_address_index}")
         return float('inf') 
 
-
-#time-complexity = o(n^3), space complexity = o(n)
 # Parameters 
 ALPHA = 1        
 BETA = 2         
@@ -146,8 +144,7 @@ def loadAddresses():
 
 loadAddresses()
 
-# open CSV file and add every row from the file to the initialized data structure.
-# time complexity O(N), space complexity O(N) where n is the number of rows
+# open CSV file and add every row from the file to the initialized data structure. time - space complexity O(N) where n is the number of rows
 def load_package_data():
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 

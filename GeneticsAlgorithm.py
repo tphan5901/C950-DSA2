@@ -16,14 +16,14 @@ def lookUp(package_id):
     return parsedPackages.get(package_id, None)
 
 #return edge weight between two addresses. time-space complexity = O(1)
-def getdistance(truck_address_index, package_address_index):
+def getdistance(truckaddress, packageaddress):
     try:
-        distance = distanceData[truck_address_index][package_address_index]
+        distance = distanceData[truckaddress][packageaddress]
         if distance == '':
-            distance = distanceData[package_address_index][truck_address_index]
+            distance = distanceData[packageaddress][truckaddress]
         return float(distance)
     except:
-        print(f"Index error: truck_address_index={truck_address_index}, package_address_index={package_address_index}")
+        print(f"Index error: truckaddress={truckaddress}, packageaddress={packageaddress}")
         return float('inf') 
 
 #these parameters are configurable. 2sec runtime for i5 10th gen cpu 3.6ghz / m.2 ssd. the algorithm may take longer to run initially for lower hardware specifications 
@@ -32,8 +32,8 @@ POPULATION_SIZE = 100
 MUTATION_RATE = 0.01 #1%
 GENERATIONS = 100
 
-#calculate total distance of route, starting w/ truck at hub and package addresses. time-space complexity = o(n)
-def calculatefitness(route, truck):
+#calculate edge weights at starting point and for every vertex. time-space complexity = o(n)
+def weights(route, truck):
     totaldistance = 0
     currentAddress = truck.address
     for package_id in route:
@@ -45,22 +45,22 @@ def calculatefitness(route, truck):
     return totaldistance
 
 #shuffle vertexes then append to the arr[]. time complexity = o(n)
-def populate(truck_packages):
+def populate(packages):
     population = []
     for i in range(POPULATION_SIZE):
-        route = truck_packages.copy()
+        route = packages.copy()
         random.shuffle(route)  
         population.append(route)
     return population
 
-# combine vertices from two parents routes. o(n^2)
+# combine one child from two parents routes. o(n^2)
 def inheritance(parent1, parent2):
     size = len(parent1)
-    #assign child route w/ size of the parent
+    #assign child route w/ size of the either parent
     child = [None] * size
-    #select two points from a sorted size of addresses
+    #select two points from sorted size
     start, end = sorted([random.randint(0, size - 1) for i in range(2)])
-     # copy the sub-route to the child from parent1 between start- end indices.
+    # copy the sub-route to the child from parent1 between start- end indices.
     child[start:end] = parent1[start:end]
     p2_pointer = 0
     #if child has an empty value. add from parent2
@@ -72,7 +72,7 @@ def inheritance(parent1, parent2):
             child[i] = parent2[p2_pointer]
     return child
 
-#select two vertices(packages) within the route and swap them. o(1)
+#select two vertices within the route and swap them. o(1)
 def mutation(route):
     if random.random() < MUTATION_RATE:
         i, j = random.sample(range(len(route)), 2)
@@ -81,10 +81,10 @@ def mutation(route):
 
 #sort by fitness score, keep top 50% of the routes from population. time complexity o(1)
 def selection(population, truck):
-    population_sorted = sorted(population, key=lambda route: calculatefitness(route, truck))
+    population_sorted = sorted(population, key=lambda route: weights(route, truck))
     return population_sorted[:POPULATION_SIZE // 2]  
 
-#each child route inherites attributes/mutations from parent route and contiously selecting optimal path based on its fitness scored. 
+#each child route inherites attributes/mutations from parent route and contiously selecting optimal path based on its objective score. time-complexity o(n^2)
 def bestroute(truck):
     population = populate(truck.packages)
     for generation in range(GENERATIONS):
@@ -100,7 +100,7 @@ def bestroute(truck):
             child = mutation(child)
             nextpopulation.append(child)
         population = nextpopulation
-    route = min(population, key=lambda route: calculatefitness(route, truck))
+    route = min(population, key=lambda route: weights(route, truck))
     return route
 
 #assign route, truck address, fetch packages and edge weights, and increment miles/time then return to the hub. time-space complexity o(n)
@@ -123,7 +123,7 @@ def init(truck):
             currentAddress = package.address
             package.time_delivered = truck.time
             package.truckID = truck.truckID
-    #return to hub
+    #return to the hub
     hub = addressDict["4001 South 700 East"]
     distance_to_hub = getdistance(currentAddress, hub)
     truck.miles += distance_to_hub
@@ -136,7 +136,7 @@ parsedPackages = {}
 #init distance array
 distanceData = []
 
-#Init dictionary 
+#init dictionary 
 addressDict = {}
 
 # open csv file then add all row to the initialized dictionary as key-val pairs. time - space complexity O(N) where n is the number of rows
@@ -151,7 +151,7 @@ def loadAddresses():
 loadAddresses()
 
 # open csv file and add every row from the file to the initialized data structure. time complexity O(N) - space complexity O(N) where n is the number of rows
-def load_package_data():
+def loadpackage():
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
             package_reader = csv.reader(csvfile, delimiter=',')
@@ -178,10 +178,10 @@ def load_package_data():
         print(f"Error parsing packages: {e}")
         return {}
 
-parsedPackages = load_package_data()
+parsedPackages = loadpackage()
 
 # open csv file, parse every row in the file, append them to the array. time-space complexity O(N) where n is the number of rows
-def read_distance_data():
+def readdistance():
     with open('distance_data.csv', 'r') as file:
         csv_reader = csv.reader(file)
         for row in csv_reader:
@@ -189,9 +189,9 @@ def read_distance_data():
 
     return distanceData
 
-distanceData = read_distance_data()
+distanceData = readdistance()
 
-    
+#load the packages, starting address, mileage, time
 truck1Packages = [str(a) for a in [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]]
 truck1 = Truck(truck1Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=8, minutes=0), 1)
 
@@ -202,9 +202,9 @@ truck3Packages = [str(c) for c in [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 24, 26,
 truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=10, minutes=0), 3)
 
 
-#print each row in arr. time-space complexity: O(N)
-for a in distanceData:
-    print(a)
+#print each row in arr. time-space complexity: o(n)
+#for a in distanceData:
+ #   print(a)
 
 def run():
     init(truck1)
@@ -213,7 +213,7 @@ def run():
 
 #interface
 def interface():
-    print('WGUPS Delivery Service')
+    print('パキッジ パーセル デリバリー サービス')
     print('**********************')
     total_miles = round(truck1.miles + truck2.miles + truck3.miles, 2)
     print(f"Route completed in: {total_miles} miles")

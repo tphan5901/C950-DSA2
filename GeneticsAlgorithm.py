@@ -1,5 +1,4 @@
 #studentID: O11746951
-#Thinh Phan
 import csv
 import datetime
 from hash import *
@@ -12,51 +11,41 @@ from colorama import Fore, Style
 import random
 import heapq
 
-#returns distance between two weights. time complexity = O(1)
-def heuristic(start, end):
-    return abs(start - end)
-
-#returns list of neighbor nodes. time complexity = O(1)
-def get_neighbors(graph, node):
-    return graph[node]
-
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
 def lookUp(package_id):
-    for package in parsedPackages:
-        if package.id == package_id:
-            return package
-    return None
+    return parsedPackages.get(package_id, None)
 
 #return edge weight between two addresses. time-space complexity = O(1)
-def get_distance(truck_address_index, package_address_index):
+def getdistance(truck_address_index, package_address_index):
     try:
         distance = distanceData[truck_address_index][package_address_index]
         if distance == '':
             distance = distanceData[package_address_index][truck_address_index]
         return float(distance)
-    except IndexError:
+    except:
         print(f"Index error: truck_address_index={truck_address_index}, package_address_index={package_address_index}")
         return float('inf') 
 
-#parameters
+#these parameters are configurable. 2sec runtime for i5 10th gen cpu 3.6ghz / m.2 ssd. the algorithm may take longer to run initially for lower hardware specifications 
+# please try running it 3-4times
 POPULATION_SIZE = 100
-MUTATION_RATE = 0.1
+MUTATION_RATE = 0.01 #1%
 GENERATIONS = 100
 
-#calculate total distance of route, starting w/ truck at hub and package addresses
-def calculate_fitness(route, truck):
-    total_distance = 0
+#calculate total distance of route, starting w/ truck at hub and package addresses. time-space complexity = o(n)
+def calculatefitness(route, truck):
+    totaldistance = 0
     currentAddress = truck.address
     for package_id in route:
         package = lookUp(package_id)
         if package:
-            total_distance += get_distance(currentAddress, package.address)
+            totaldistance += getdistance(currentAddress, package.address)
             currentAddress = package.address
-    total_distance += get_distance(currentAddress, addressDict["4001 South 700 East"])
-    return total_distance
+    totaldistance += getdistance(currentAddress, addressDict["4001 South 700 East"])
+    return totaldistance
 
-#shuffle vertexes then append to the arr[]
-def copulate(truck_packages):
+#shuffle vertexes then append to the arr[]. time complexity = o(n)
+def populate(truck_packages):
     population = []
     for i in range(POPULATION_SIZE):
         route = truck_packages.copy()
@@ -64,64 +53,67 @@ def copulate(truck_packages):
         population.append(route)
     return population
 
-# combine parts of two routes
+# combine vertices from two parents routes. o(n^2)
 def inheritance(parent1, parent2):
     size = len(parent1)
-    #create empty route
+    #assign child route w/ size of the parent
     child = [None] * size
-    #select two points and sort them t
+    #select two points from a sorted size of addresses
     start, end = sorted([random.randint(0, size - 1) for i in range(2)])
+     # copy the sub-route to the child from parent1 between start- end indices.
     child[start:end] = parent1[start:end]
     p2_pointer = 0
-    #if the child route is empty. add value from 2nd parent
+    #if child has an empty value. add from parent2
     for i in range(size):
         if child[i] is None:
             while parent2[p2_pointer] in child:
                 p2_pointer += 1
+            #add non-duplicate value from parent2.
             child[i] = parent2[p2_pointer]
-
     return child
 
-#randomize the route , select two vertices(packages) within the route and swap them
+#select two vertices(packages) within the route and swap them. o(1)
 def mutation(route):
     if random.random() < MUTATION_RATE:
-        idx1, idx2 = random.sample(range(len(route)), 2)
-        route[idx1], route[idx2] = route[idx2], route[idx1]
+        i, j = random.sample(range(len(route)), 2)
+        route[i], route[j] = route[j], route[i]
     return route
 
-#sort by fitness score, keep 50% of the routes from population
+#sort by fitness score, keep top 50% of the routes from population. time complexity o(1)
 def selection(population, truck):
-    population_sorted = sorted(population, key=lambda route: calculate_fitness(route, truck))
+    population_sorted = sorted(population, key=lambda route: calculatefitness(route, truck))
     return population_sorted[:POPULATION_SIZE // 2]  
 
-
-def route(truck):
-    population = copulate(truck.packages)
+#each child route inherites attributes/mutations from parent route and contiously selecting optimal path based on its fitness scored. 
+def bestroute(truck):
+    population = populate(truck.packages)
     for generation in range(GENERATIONS):
         #select route
-        selected_population = selection(population, truck)
-        next_population = []
+        selectedpopulation = selection(population, truck)
+        nextpopulation = []
         for i in range(POPULATION_SIZE):
-            parent1, parent2 = random.sample(selected_population, 2)
-            #inherit
+            #select two parents 
+            parent1, parent2 = random.sample(selectedpopulation, 2)
+            #inherit parts of vertices from parent
             child = inheritance(parent1, parent2)
-            #mutation
+            #swap some addresses
             child = mutation(child)
-            next_population.append(child)
-        population = next_population
-    bestRoute = min(population, key=lambda route: calculate_fitness(route, truck))
-    return bestRoute
+            nextpopulation.append(child)
+        population = nextpopulation
+    route = min(population, key=lambda route: calculatefitness(route, truck))
+    return route
 
-#assign route, truck address, fetch packages and edge weights, and increment miles/time
+#assign route, truck address, fetch packages and edge weights, and increment miles/time then return to the hub. time-space complexity o(n)
 def init(truck):
-    bestRoute = route(truck)
+    route = bestroute(truck)
     
     currentAddress = truck.address
-    for package_id in bestRoute:
+    for package_id in route:
         #fetch package
         package = lookUp(package_id)
         if package:
-            distance = get_distance(currentAddress, package.address)
+            #obtain edge weights
+            distance = getdistance(currentAddress, package.address)
             if package.id == '9' and truck.time > datetime.timedelta(hours=10, minutes=20):
                 package.address = addressDict["410 S State St"]
             #increment edge weight / time = distance / 18 * (1 / 60)
@@ -133,13 +125,13 @@ def init(truck):
             package.truckID = truck.truckID
     #return to hub
     hub = addressDict["4001 South 700 East"]
-    distance_to_hub = get_distance(currentAddress, hub)
+    distance_to_hub = getdistance(currentAddress, hub)
     truck.miles += distance_to_hub
     truck.time += datetime.timedelta(minutes=(distance_to_hub / (0.3)))
     truck.miles = float(f"{truck.miles:.1f}")
 
 #init packages list
-parsedPackages = []
+parsedPackages = {}
 
 #init distance array
 distanceData = []
@@ -147,8 +139,7 @@ distanceData = []
 #Init dictionary 
 addressDict = {}
 
-# open csv file then add all row to the initialized dictionary as key-val pairs.
-# time complexity O(N), space complexity O(N) where n is the number of rows
+# open csv file then add all row to the initialized dictionary as key-val pairs. time - space complexity O(N) where n is the number of rows
 def loadAddresses():
     with open('WGUPS_Addresses.csv', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
@@ -159,8 +150,7 @@ def loadAddresses():
 
 loadAddresses()
 
-# open CSV file and add every row from the file to the initialized data structure.
-# time complexity O(N), space complexity O(N) where n is the number of rows
+# open csv file and add every row from the file to the initialized data structure. time complexity O(N) - space complexity O(N) where n is the number of rows
 def load_package_data():
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
@@ -180,16 +170,17 @@ def load_package_data():
                 address_index = addressDict[address]
                 new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight, special_notes)
 
-                parsedPackages.append(new_package)
+                # store package in the dictionary with ID as the key
+                parsedPackages[id] = new_package
 
         return parsedPackages  
     except Exception as e:
         print(f"Error parsing packages: {e}")
-        return []  
+        return {}
 
 parsedPackages = load_package_data()
 
-# open CSV file, parse every row in the file, append them to the array. time-space complexity O(N) where n is the number of rows
+# open csv file, parse every row in the file, append them to the array. time-space complexity O(N) where n is the number of rows
 def read_distance_data():
     with open('distance_data.csv', 'r') as file:
         csv_reader = csv.reader(file)
@@ -200,47 +191,20 @@ def read_distance_data():
 
 distanceData = read_distance_data()
 
+    
+truck1Packages = [str(a) for a in [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]]
+truck1 = Truck(truck1Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=8, minutes=0), 1)
 
-packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
+truck2Packages = [str(b) for b in [3, 6, 18, 22, 23, 25, 27, 28, 32, 33, 35, 36, 38]]
+truck2 = Truck(truck2Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=9, minutes=10), 2)
 
-#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n)
-truck1Packages = []
-for a in packageKey1:
-    package = lookUp(str(a))
-    if package:
-        truck1Packages.append(package.id)
+truck3Packages = [str(c) for c in [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 24, 26, 39]]
+truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=10, minutes=0), 3)
 
-#truck initialization packages/departure location/time , truckID
-truck1 = Truck(truck1Packages, addressDict["4001 South 700 East"], 0,  datetime.timedelta(hours=8, minutes=0), 1)
-
-#truck2
-packageKey2 = [3, 6, 18, 22, 23, 25, 27, 28, 32, 33, 35, 36, 38]
-
-#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n), space complexity = O(N)
-truck2Packages = []
-for b in packageKey2:
-    package = lookUp(str(b))
-    if package:
-        truck2Packages.append(package.id)
-
-truck2 = Truck(truck2Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=9, minutes=10) , 2)
-
-# truck3
-packageKey3 = [2, 4, 5, 7, 8, 9, 10, 11, 12, 17, 21, 24, 26, 39]
-
-#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n^2), space complexity = O(N)
-truck3Packages = []
-for c in packageKey3:
-    for Package in parsedPackages:
-        if Package.id == str(c): #parse as str 
-            truck3Packages.append(Package.id)
-
-truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=10, minutes=0)  , 3)
 
 #print each row in arr. time-space complexity: O(N)
 #for a in distanceData:
 #    print(a)
-
 
 def run():
     init(truck1)
@@ -301,7 +265,7 @@ def interface():
             elif timeStamp >= tempStorage.time_delivered:
                 mg =  "delivered"
 
-            headers = ["Package ID", "Left the Hub At", "Status", "Deliver At", "Deliver To", "Special Notes", "Truck Number"]
+            headers = ["Package ID", "Left Hub at", "Status", "Deliver at", "Deliver to", "Special Notes", "Truck Number"]
             package_data = []
 
             package_data.append([

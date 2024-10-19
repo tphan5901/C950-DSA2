@@ -6,147 +6,154 @@ from hash import *
 from package import *
 from truck import *
 from collections import deque
-from tabulate import tabulate #[pip install tabulate] in the CLI b4 running my code
+from itertools import permutations
+from tabulate import tabulate
+from colorama import Fore, Style
 import heapq
+import random
+import numpy as np
+
+#returns distance between two weights. time complexity = O(1)
+def heuristic(start, end):
+    return abs(start - end)
+
+#returns list of neighbor nodes. time complexity = O(1)
+def get_neighbors(graph, node):
+    return graph[node]
 
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
-def lookUp(packageID):
+def lookUp(package_id):
     for package in parsedPackages:
-        if package.id == packageID:
+        if package.id == package_id:
             return package
     return None
 
-import random
+#return edge weight between two addresses. time-space complexity = O(1)
+def get_distance(truck_address_index, package_address_index):
+    try:
+        distance = distanceData[truck_address_index][package_address_index]
+        if distance == '':
+            distance = distanceData[package_address_index][truck_address_index]
+        return float(distance)
+    except IndexError:
+        print(f"Index error: truck_address_index={truck_address_index}, package_address_index={package_address_index}")
+        return float('inf') 
 
-# Initialize pheromones on the edges (addresses) with small values. Time complexity: O(N^2)
-def initialize_pheromones():
-    pheromones = {address: {other_address: 0.1 for other_address in addressDict.values()} for address in addressDict.values()}
+
+#time-complexity = o(n^3), space complexity = o(n)
+# Parameters 
+ALPHA = 1        
+BETA = 2         
+EVAPORATION = 0.5  
+ANTS = 20        
+ITERATIONS = 100  
+
+#matrix
+def initialize_pheromones(num_nodes):
+    return np.ones((num_nodes, num_nodes))
+
+# Update the pheromone matrix based on ant paths
+def update_pheromones(pheromones, all_paths, all_distances):
+    pheromones *= (1 - EVAPORATION)  # Evaporate pheromones
+    for path, distance in zip(all_paths, all_distances):
+        for i in range(len(path) - 1):
+            pheromones[path[i]][path[i+1]] += 1.0 / distance  # Deposit pheromones
     return pheromones
 
-# Heuristic calculation: inverse of the distance between nodes (the closer, the better). Time complexity: O(1)
-def heuristic_aco(start, end):
-    return 1.0 / (distanceData[start][end] + 1e-10) 
+# Calculate probability of choosing the next address based on pheromones and distance
+def calculate_probabilities(current_address, unvisited, pheromones, distance_matrix):
+    pheromone_values = np.array([pheromones[current_address][i] for i in unvisited])
+    distance_values = np.array([distance_matrix[current_address][i] for i in unvisited])
+    probabilities = (pheromone_values ** ALPHA) * ((1 / distance_values) ** BETA)
+    return probabilities / probabilities.sum()
 
-# Time complexity: O(E), where E is the number of edges between addresses.
-def aco_pathfinding(truckAddress, packages, pheromones, alpha=1.0, beta=5.0, evaporation_rate=0.5, ants=10):
-    distances = {address: float('inf') for address in addressDict.values()}
-    distances[truckAddress] = 0
+#run ACO for a single truck
+def ant_colony_optimization(truck, distance_matrix):
+    num_nodes = len(distance_matrix)
+    pheromones = initialize_pheromones(num_nodes)
+
     best_path = None
     best_distance = float('inf')
-    
-    for _ in range(ants):
-        visited = set()
-        current_address = truckAddress
-        path = [current_address]
-        total_distance = 0
-        
-        while len(visited) < len(packages):
-            next_package = None
-            next_address = None
-            probabilities = []
-            unvisited_packages = [p for p in packages if p.address not in visited]
 
-            # Compute probability for each neighbor based on pheromones and heuristics
-            for package in unvisited_packages:
-                pheromone = pheromones[current_address][package.address]
-                heuristic_value = heuristic_aco(current_address, package.address)
-                probabilities.append((pheromone ** alpha) * (heuristic_value ** beta))
+    for iteration in range(ITERATIONS):
+        all_paths = []
+        all_distances = []
 
-            if probabilities:
-                probabilities_sum = sum(probabilities)
-                probabilities = [p / probabilities_sum for p in probabilities]
+        for ant in range(ANTS):
+            # Initialize an ant's path starting at the truck's current address
+            current_address = truck.address
+            unvisited = list(truck.packages)
+            path = [current_address]
+            total_distance = 0
 
-                # Select next address based on probabilities
-                next_package = random.choices(unvisited_packages, weights=probabilities)[0]
-                next_address = next_package.address
-
-                # Update path and distance
-                distance_to_next = distanceData[current_address][next_address]
+            while unvisited:
+                probabilities = calculate_probabilities(current_address, unvisited, pheromones, distance_matrix)
+                next_package = random.choices(unvisited, probabilities)[0]
+                distance_to_next = distance_matrix[current_address][next_package]
                 total_distance += distance_to_next
-                path.append(next_address)
-                visited.add(next_address)
-                current_address = next_address
+                path.append(next_package)
+                unvisited.remove(next_package)
+                current_address = next_package
+            # Return to hub
+            total_distance += distance_matrix[current_address][addressDict["4001 South 700 East"]]
+            path.append(addressDict["4001 South 700 East"])
 
-        # best path
-        if total_distance < best_distance:
-            best_distance = total_distance
-            best_path = path
-    
-    # Evaporate some pheromones
-    for address in pheromones:
-        for other_address in pheromones[address]:
-            pheromones[address][other_address] *= (1 - evaporation_rate)
+            all_paths.append(path)
+            all_distances.append(total_distance)
 
-    # Deposit pheromones on the best path found
-    if best_path:
-        for i in range(len(best_path) - 1):
-            pheromones[best_path[i]][best_path[i + 1]] += 1.0 / best_distance
+            if total_distance < best_distance:
+                best_path = path
+                best_distance = total_distance
 
+        # Update pheromones after all ants have completed their paths
+        pheromones = update_pheromones(pheromones, all_paths, all_distances)
     return best_path, best_distance
 
-# Time complexity is O(N^3). Outer while loop, an inner loop, loop through list and add the packages. Third loop creates the queue from truck packages
-def deliver_aco(truck):
-    dequeue = deque(truck.packages)
-    pheromones = initialize_pheromones()
-    DeliveryTime = datetime.timedelta(hours=10, minutes=20)
 
-    while dequeue:
-        # Run ACO algorithm to find the best path for the current set of packages
-        path, _ = aco_pathfinding(truck.address, [lookUp(pid) for pid in dequeue], pheromones)
-        
-        # Deliver packages following the ACO best path
-        for packageID in path:
-            package = lookUp(packageID)
-            if package:
-                # Special case for package 9
-                if package.id == '9' and truck.time > DeliveryTime:
-                    package.address = addressDict["410 S State St"]
-                distance_to_package = distanceData[truck.address][package.address]
-                truck.miles += round(distance_to_package, 1)
-                truck.time += datetime.timedelta(minutes=(distance_to_package / 0.3))
-                truck.address = package.address
-                package.time_delivered = truck.time
-                package.truckID = truck.truckID
-                dequeue.remove(package.id)
-    
-    # Return to hub
-    hub = addressDict["4001 South 700 East"]
-    distance_to_hub = distanceData[truck.address][hub]
-    truck.miles += round(distance_to_hub, 1)
-    truck.time += datetime.timedelta(minutes=(distance_to_hub / 0.3))
-    truck.address = hub
-    truck.miles = float(f"{truck.miles:.1f}")
- 
+def deliver(truck):
+    distance_matrix = np.array(distanceData, dtype=float) 
+    best_path, total_distance = ant_colony_optimization(truck, distance_matrix)
+
+    truck.miles += total_distance
+    truck.time += datetime.timedelta(minutes=(total_distance / 0.3))
+
+    print(f"Truck {truck.truckID} completed delivery with ACO in {total_distance:.2f} miles")
+
+    # Mark packages as delivered based on the best path
+    for package_id in best_path[1:-1]:  # Skip the first (hub) and last (hub return)
+        package = lookUp(package_id)
+        if package:
+            package.time_delivered = truck.time
+            package.truckID = truck.truckID
+
+#init packages list
 parsedPackages = []
 
-# hash table
-hashTable = HashTable()
-
-#distance array , initialized
+#init distance array
 distanceData = []
-    
-#dictionary initilized 
+
+#Init dictionary 
 addressDict = {}
 
-#open csv file then add all row to the initialized dictionary as key-val pairs. time complexity O(N), space complexity O(N) where n is the exponential number of rows
+# open csv file then add all row to the initialized dictionary as key-val pairs.
+# time complexity O(N), space complexity O(N) where n is the number of rows
 def loadAddresses():
-    with open('WGUPS_Addresses.csv',  encoding='utf-8-sig') as file:
+    with open('WGUPS_Addresses.csv', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
         for row in reader:
-            index = int(row[0]) #col1
-            address = row[2] #col2
+            index = int(row[0])  # col1
+            address = row[2]  # col2
             addressDict[address] = index 
 
 loadAddresses()
-#print(addressDict) 
 
-#open csv file and add every row from the file to the initialized data structure. time complexity O(N), space complexity O(N) where n is the exponential number of rows
-def load_package_data(hashTable):
+# open CSV file and add every row from the file to the initialized data structure.
+# time complexity O(N), space complexity O(N) where n is the number of rows
+def load_package_data():
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
             package_reader = csv.reader(csvfile, delimiter=',')
             
-            #for every row, read columns as package properties then insert them as a new package object
             for row in package_reader:
                 id = row[0].strip()
                 address = row[1].strip()
@@ -159,31 +166,32 @@ def load_package_data(hashTable):
               
                 # get index of the address
                 address_index = addressDict[address]
-                new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight,
-                                      special_notes)
+                new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight, special_notes)
 
-                hashTable.insert(id ,new_package)
                 parsedPackages.append(new_package)
+
+        return parsedPackages  
     except Exception as e:
         print(f"Error parsing packages: {e}")
+        return []  
 
-load_package_data(hashTable)
+parsedPackages = load_package_data()
 
-#open csv file, parse every row in the file, append them to the array. time complexity O(N), space complexity O(N) where n is the exponential number of rows
+# open CSV file, parse every row in the file, append them to the array. time-space complexity O(N) where n is the number of rows
 def read_distance_data():
     with open('distance_data.csv', 'r') as file:
         csv_reader = csv.reader(file)
         for row in csv_reader:
-            # convert row to a list of floats
-            distanceData.append([float(cell) if cell else 0.0 for cell in row])
+            distanceData.append(row)
 
     return distanceData
 
-distance_matrix = read_distance_data()
+distanceData = read_distance_data()
+
 
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
-#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n), space complexity = O(N)
+#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n)
 truck1Packages = []
 for a in packageKey1:
     package = lookUp(str(a))
@@ -215,16 +223,16 @@ for c in packageKey3:
         if Package.id == str(c): #parse as str 
             truck3Packages.append(Package.id)
 
-truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
+truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=10, minutes=0)  , 3)
 
 #print each row in arr. time-space complexity: O(N)
 #for a in distanceData:
 #    print(a)
 
 def run():
-    deliver_aco(truck1)
-    deliver_aco(truck2)
-    deliver_aco(truck3)
+    deliver(truck1)
+    deliver(truck2)
+    deliver(truck3)
 
 #interface
 def interface():
@@ -258,6 +266,7 @@ def interface():
             tempStorage = lookUp(packageId)
             
             #based on package's truck ID, assign a time when the truck leaves hub and based on timestamp user enters and based on condition, return a msg value. O(1)
+
             mg = ''
             truckDepartureTime = {
                 1: datetime.timedelta(hours=8, minutes=0),
@@ -283,7 +292,7 @@ def interface():
                 mg =  "delivered"
 
 
-            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDelivery Time: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nLeft the hub at: {initTime} \nStatus: {mg} \nDeliver at: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
         elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
@@ -325,9 +334,9 @@ def interface():
                     status = "en route"
                 elif timeStamp >= Package.time_delivered:
                     status =  "delivered"
-                        
-                table_data.append([Package.id, address, status, Package.deliveryTime, Package.truckID])
-            print(tabulate(table_data, headers=["Package ID", "Address", "Status", "Delivery Deadline", "Truck ID"], tablefmt="pretty"))
+                    
+                table_data.append([Package.id, address, status, Package.time_delivered, Package.truckID])
+            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Deliver by", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
 
         elif selectedNum == 3:
             print("Exiting program...")
@@ -336,9 +345,10 @@ def interface():
         else:
             print("Invalid command, please try again.")
 
-#main
+#main executes what is called within scope
 if __name__ == "__main__":
     run()
     interface()
+
 
     

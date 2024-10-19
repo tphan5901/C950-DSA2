@@ -11,7 +11,7 @@ from colorama import Fore, Style
 import random
 import heapq
 
-#lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
+#lookup matching packageID in parsedPackages with passed in parameter ID. time - space complexity = O(1)
 def lookUp(package_id):
     return parsedPackages.get(package_id, None)
 
@@ -130,7 +130,7 @@ def init(truck):
     truck.time += datetime.timedelta(minutes=(distance_to_hub / (0.3)))
     truck.miles = float(f"{truck.miles:.1f}")
 
-#init packages list
+#init packages dictionary
 parsedPackages = {}
 
 #init distance array
@@ -203,8 +203,8 @@ truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.t
 
 
 #print each row in arr. time-space complexity: O(N)
-#for a in distanceData:
-#    print(a)
+for a in distanceData:
+    print(a)
 
 def run():
     init(truck1)
@@ -265,7 +265,7 @@ def interface():
             elif timeStamp >= tempStorage.time_delivered:
                 mg =  "delivered"
 
-            headers = ["Package ID", "Left Hub at", "Status", "Deliver at", "Deliver to", "Special Notes", "Truck Number"]
+            headers = ["Package ID", "Left Hub at", "Status", "Delivered at", "Deliver to", "Special Notes", "Truck Number"]
             package_data = []
 
             package_data.append([
@@ -287,7 +287,7 @@ def interface():
             print(f"Status of packages at {timeStamp}:")
             table_data = []
 
-            #fetch all packages stored from the parsedPackage list and insert them  into p4kages list. time complexity =  O(N), space complexity = O(N) 
+            #fetch all packages stored from the parsedPackage and insert into p4kages list. time complexity =  O(N), space complexity = O(N) 
             p4ckages = []
 
             for Package in parsedPackages:
@@ -296,15 +296,15 @@ def interface():
             status = ""
 
             #every package obj in list based on its truck ID, we assign truck departure time and based on condition we assign a msg
-            for Package in p4ckages:
+            for Package in parsedPackages.values():
                 msg = ''
                 truckDepartureTime = {
-                1: datetime.timedelta(hours=8, minutes=0),
-                2: datetime.timedelta(hours=9, minutes=5),
-                3: datetime.timedelta(hours=10, minutes=0)
+                    1: datetime.timedelta(hours=8, minutes=0),
+                    2: datetime.timedelta(hours=9, minutes=5),
+                    3: datetime.timedelta(hours=10, minutes=0)
                 }
-    
-                address = next(key for key, value in addressDict.items() if value == Package.address)
+
+                address = Package.address
 
                 if Package.truckID == 1:
                     initTime = truckDepartureTime[1]
@@ -315,13 +315,16 @@ def interface():
                     
                 if timeStamp <= initTime:
                     status = "at hub"
+                    time_delivered = "Havent left hub"  
                 elif initTime < timeStamp < Package.time_delivered:
                     status = "en route"
+                    time_delivered = Package.time_delivered  
                 elif timeStamp >= Package.time_delivered:
-                    status =  "delivered"
+                    status = "delivered"
+                    time_delivered = Package.time_delivered  
                     
-                table_data.append([Package.id, address, status, Package.time_delivered, Package.truckID])
-            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Deliver by", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
+                table_data.append([Package.id, address, initTime, status, time_delivered, Package.truckID])
+            print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Left hub at{Style.RESET_ALL}", "Status", f"{Fore.CYAN}Current time{Style.RESET_ALL}", "Truck ID"], tablefmt="pretty"))
 
         elif selectedNum == 3:
             print("Exiting program...")

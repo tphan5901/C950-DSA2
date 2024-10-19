@@ -4,142 +4,168 @@ import csv
 import datetime
 from hash import *
 from package import *
+from truck import *
 from collections import deque
-from tabulate import tabulate #[pip install tabulate] in the CLI b4 running my code
-import heapq
+from itertools import permutations
+from tabulate import tabulate
 from colorama import Fore, Style
 import random
+import heapq
 
-POPULATION_SIZE = 100
-GENERATIONS = 500
-MUTATION_RATE = 0.1
+#returns distance between two weights. time complexity = O(1)
+def heuristic(start, end):
+    return abs(start - end)
 
-#truck class object
-class Truck:
-    def __init__(self, packages, address, miles, time, truckID):
-        self.packages = packages
-        self.address = address
-        self.miles = miles
-        self.time = time
-        self.truckID = truckID
-        self.return_time = None   
-    def __str__(self):
-        return (f"Truck ID: {self.truckID}, "
-                f"Current Address: {self.address}, "
-                f"Total Miles Driven: {self.miles:.2f}, "
-                f"Total Time: {self.time}, "
-                f"Packages: {', '.join(str(package) for package in self.packages)}")
-    
+#returns list of neighbor nodes. time complexity = O(1)
+def get_neighbors(graph, node):
+    return graph[node]
 
 #lookup matching packageID in parsedPackages with passed in parameter ID. time complexity = O(N). space complexity = O(1)
-def lookUp(packageID):
+def lookUp(package_id):
     for package in parsedPackages:
-        if package.id == packageID:
+        if package.id == package_id:
             return package
     return None
 
-def genetic_algorithm(truck):
-    population = [random.sample(truck.packages, len(truck.packages)) for _ in range(POPULATION_SIZE)]
-    for generation in range(GENERATIONS):
-        #Assign total distance (fitness) of route
-        fitness_scores = [(route, calculate_route_distance(route, truck.address)) for route in population]
-        #sort by fitness (lower distance is better)
-        fitness_scores.sort(key=lambda x: x[1])
-        if fitness_scores[0][1] == 0:
-            break
-        # selectism - top N routes survive (elitism)
-        survivors = [route for route, distance in fitness_scores[:POPULATION_SIZE // 2]]
-        #copulate new population from survivors
-        population = crossover_and_mutate(survivors)
-    best_route = fitness_scores[0][0]
-    return best_route
+#return edge weight between two addresses. time-space complexity = O(1)
+def get_distance(truck_address_index, package_address_index):
+    try:
+        distance = distanceData[truck_address_index][package_address_index]
+        if distance == '':
+            distance = distanceData[package_address_index][truck_address_index]
+        return float(distance)
+    except IndexError:
+        print(f"Index error: truck_address_index={truck_address_index}, package_address_index={package_address_index}")
+        return float('inf') 
 
-def calculate_route_distance(route, starting_address):
-    #Calculate the total distance for a given route.
+#parameters
+POPULATION_SIZE = 100
+MUTATION_RATE = 0.1
+GENERATIONS = 100
+
+#calculate total distance of route, starting w/ truck at hub and package addresses
+def calculate_fitness(route, truck):
     total_distance = 0
-    current_address = starting_address
-    for packageID in route:
-        package = lookUp(packageID)
+    currentAddress = truck.address
+    for package_id in route:
+        package = lookUp(package_id)
         if package:
-            total_distance += distanceData[current_address][package.address]
-            current_address = package.address
-    # Return to hub
-    hub = addressDict["4001 South 700 East"]
-    total_distance += distanceData[current_address][hub]
+            total_distance += get_distance(currentAddress, package.address)
+            currentAddress = package.address
+    total_distance += get_distance(currentAddress, addressDict["4001 South 700 East"])
     return total_distance
 
-def crossover_and_mutate(survivors):
-    """Generate new population with crossover and mutation."""
-    new_population = []
+#shuffle edge weight then append to the arr[]
+def create_initial_population(truck_packages):
+    population = []
+    for i in range(POPULATION_SIZE):
+        route = truck_packages.copy()
+        random.shuffle(route)  
+        population.append(route)
+    return population
+
+# combine parts of two routes
+def crossover(parent1, parent2):
+    size = len(parent1)
+    #create empty route
+    child = [None] * size
+    #select two points and sort them t
+    start, end = sorted([random.randint(0, size - 1) for i in range(2)])
+    child[start:end] = parent1[start:end]
+    p2_pointer = 0
+    #if the child route is empty. add value from 2nd parent
+    for i in range(size):
+        if child[i] is None:
+            while parent2[p2_pointer] in child:
+                p2_pointer += 1
+            child[i] = parent2[p2_pointer]
+
+    return child
+
+#randomize the route , select two vertices within the route and swap them
+def mutate(route):
+    if random.random() < MUTATION_RATE:
+        idx1, idx2 = random.sample(range(len(route)), 2)
+        route[idx1], route[idx2] = route[idx2], route[idx1]
+    return route
+
+#select the best routes from the population
+def selection(population, truck):
+    population_sorted = sorted(population, key=lambda route: calculate_fitness(route, truck))
+    #keep 50% of routes
+    return population_sorted[:POPULATION_SIZE // 2]  
+
+
+def genetic_algorithm(truck):
+    population = create_initial_population(truck.packages)
+    for generation in range(GENERATIONS):
+        #select route
+        selected_population = selection(population, truck)
+        next_population = []
+        for _ in range(POPULATION_SIZE):
+            parent1, parent2 = random.sample(selected_population, 2)
+            child = crossover(parent1, parent2)
+            child = mutate(child)
+            next_population.append(child)
+        population = next_population
+    #return the best route
+    bestRoute = min(population, key=lambda route: calculate_fitness(route, truck))
+    return bestRoute
+
+#init route
+def init(truck):
+    bestRoute = genetic_algorithm(truck)
     
-    # Create offspring
-    while len(new_population) < POPULATION_SIZE:
-        parent1, parent2 = random.sample(survivors, 2)
-        cut = random.randint(0, len(parent1))
-        #inheritance
-        child = parent1[:cut] + [p for p in parent2 if p not in parent1[:cut]]
-        # Mutation (randomly swap two packages)
-        if random.random() < MUTATION_RATE:
-            i, j = random.sample(range(len(child)), 2)
-            child[i], child[j] = child[j], child[i]
-        new_population.append(child)
-    return new_population
-
-
-def deliver(truck):
-    truck.departure_time = truck.time
-    optimized_route = genetic_algorithm(truck)
-    # Deliver the packages in the optimized route
-    for packageID in optimized_route:
-        package = lookUp(packageID)
+    currentAddress = truck.address
+    for package_id in bestRoute:
+        #fetch package
+        package = lookUp(package_id)
         if package:
-            nextDistance = distanceData[truck.address][package.address]
-            truck.miles += round(nextDistance, 1)
-            truck.time += datetime.timedelta(minutes=(nextDistance / 0.3)) 
-            truck.address = package.address  
-            package.time_delivered = truck.time  
-            package.truckID = truck.truckID 
+            distance = get_distance(currentAddress, package.address)
+            if package.id == '9' and truck.time > datetime.timedelta(hours=10, minutes=20):
+                package.address = addressDict["410 S State St"]
+            #increment edge weight / time = distance / 18 * (1 / 60)
+            truck.miles += distance
+            truck.time += datetime.timedelta(minutes=(distance / (0.3)))
             print(f"Truck {truck.truckID} delivered package {package.id} at {truck.time}")
+            currentAddress = package.address
+            package.time_delivered = truck.time
+            package.truckID = truck.truckID
     # Return to hub
     hub = addressDict["4001 South 700 East"]
-    distance_to_hub = distanceData[truck.address][hub]
-    truck.miles += round(distance_to_hub, 1)
-    truck.time += datetime.timedelta(minutes=(distance_to_hub / 0.3)) 
-    truck.address = hub
+    distance_to_hub = get_distance(currentAddress, hub)
+    truck.miles += distance_to_hub
+    truck.time += datetime.timedelta(minutes=(distance_to_hub / (0.3)))
     truck.miles = float(f"{truck.miles:.1f}")
-    truck.return_time = truck.time
 
-
+#init packages list
 parsedPackages = []
 
-# hash table
-hashTable = HashTable()
-
-#distance array , initialized
+#init distance array
 distanceData = []
-    
-#dictionary initilized 
+
+#Init dictionary 
 addressDict = {}
 
-#Parse csv file then add all row to the initialized dictionary as key-val pairs. Time complexity O(N)
+# open csv file then add all row to the initialized dictionary as key-val pairs.
+# time complexity O(N), space complexity O(N) where n is the number of rows
 def loadAddresses():
-    with open('WGUPS_Addresses.csv',  encoding='utf-8-sig') as file:
+    with open('WGUPS_Addresses.csv', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
         for row in reader:
-            index = int(row[0]) #col1
-            address = row[2] #col2
+            index = int(row[0])  # col1
+            address = row[2]  # col2
             addressDict[address] = index 
 
 loadAddresses()
-#print(addressDict) 
 
-#Parse every row from the file, append to initialized data structure. Time complexity O(N)
-def load_package_data(hashTable):
+# open CSV file and add every row from the file to the initialized data structure.
+# time complexity O(N), space complexity O(N) where n is the number of rows
+def load_package_data():
     try:
         with open('WGUPS_Package.csv', encoding='utf-8-sig') as csvfile: 
             package_reader = csv.reader(csvfile, delimiter=',')
             
-            #for every row, read columns as package properties then insert them as a new package object
             for row in package_reader:
                 id = row[0].strip()
                 address = row[1].strip()
@@ -152,31 +178,32 @@ def load_package_data(hashTable):
               
                 # get index of the address
                 address_index = addressDict[address]
-                new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight,
-                                      special_notes)
+                new_package = Package(id, address_index, city, state, zip_code, deliveryTime, weight, special_notes)
 
-                hashTable.insert(id ,new_package)
                 parsedPackages.append(new_package)
+
+        return parsedPackages  
     except Exception as e:
         print(f"Error parsing packages: {e}")
+        return []  
 
-load_package_data(hashTable)
+parsedPackages = load_package_data()
 
-#Parse csv rows, append them to the array. time complexity O(N), space complexity O(N) where n is the exponential number of rows
+# open CSV file, parse every row in the file, append them to the array. time-space complexity O(N) where n is the number of rows
 def read_distance_data():
     with open('distance_data.csv', 'r') as file:
         csv_reader = csv.reader(file)
         for row in csv_reader:
-            # convert row to a list of floats
-            distanceData.append([float(cell) if cell else 0.0 for cell in row])
+            distanceData.append(row)
 
     return distanceData
 
-distance_matrix = read_distance_data()
+distanceData = read_distance_data()
+
 
 packageKey1 = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]
 
-#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n), space complexity = O(N)
+#loop through every item in list then loop through parsedPackages, check if keys match. add to truck1packages list. time complexity = O(n)
 truck1Packages = []
 for a in packageKey1:
     package = lookUp(str(a))
@@ -208,24 +235,20 @@ for c in packageKey3:
         if Package.id == str(c): #parse as str 
             truck3Packages.append(Package.id)
 
-truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=11, minutes=0)  , 3)
+truck3 = Truck(truck3Packages, addressDict["4001 South 700 East"], 0, datetime.timedelta(hours=10, minutes=0)  , 3)
 
 #print each row in arr. time-space complexity: O(N)
 #for a in distanceData:
 #    print(a)
 
+
 def run():
-    deliver(truck1)
-    deliver(truck2)
-    deliver(truck3)
+    init(truck1)
+    init(truck2)
+    init(truck3)
 
 #interface
 def interface():
-    print(f"\nTruck 1 departed at: {truck1.departure_time} and returned at: {truck1.return_time}")
-    print(f"Truck 2 departed at: {truck2.departure_time} and returned at: {truck2.return_time}")
-    print(f"Truck 3 departed at: {truck3.departure_time} and returned at: {truck3.return_time}")
-    print("")
-
     print('WGUPS Delivery Service')
     print('**********************')
     total_miles = round(truck1.miles + truck2.miles + truck3.miles, 2)
@@ -240,26 +263,13 @@ def interface():
         print("1. Display specific package")
         print("2. Display all package status")
         print("3. Exit")
-        
-        try:
-            selectedNum = int(input())
-        except ValueError:
-            print("Invalid input. Please enter a number between 1 - 3.")
-            continue 
+        selectedNum = int(input())
 
         if selectedNum == 1:
             packageId = input('Enter a Package ID (1-40): ')
-            while True:
-                timeStamp = input('Enter a time in HH:MM format: ')
-                try:
-                    (h, m) = map(int, timeStamp.split(':'))
-                    if h < 8 or h > 13 or m < 0 or m > 59:
-                        print("Invalid time. Please enter a time HH:MM format.")
-                        continue
-                    timeStamp = datetime.timedelta(hours=h, minutes=m)
-                    break 
-                except (ValueError, IndexError):
-                    print("Invalid format. Please enter a valid time in HH:MM format.")
+            timeStamp = input('Enter a time in HH:MM format: ')
+            (h, m) = timeStamp.split(':')
+            timeStamp = datetime.timedelta(hours=int(h), minutes=int(m))
 
             # returnPackage = hashTable.search(packageId)
             #   print(type(returnPackage))
@@ -284,7 +294,7 @@ def interface():
             elif tempStorage.truckID == 3:
                 initTime = truckDepartureTime[3]
             
-            print('Time delivered: ', tempStorage.time_delivered)
+            print('Delivery time', tempStorage.time_delivered)
             print('Departure time', initTime)
 
             if timeStamp <= initTime:
@@ -294,8 +304,8 @@ def interface():
             elif timeStamp >= tempStorage.time_delivered:
                 mg =  "delivered"
 
-            address = next(key for key, value in addressDict.items() if value == tempStorage.address)
-            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nStatus: {mg} \nDeliver at: {tempStorage.time_delivered} \nDeliver to: {address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+
+            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nLeft the hub at: {initTime} \nStatus: {mg} \nDeliver at: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
 
         elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')
@@ -337,7 +347,7 @@ def interface():
                     status = "en route"
                 elif timeStamp >= Package.time_delivered:
                     status =  "delivered"
-            
+                    
                 table_data.append([Package.id, address, status, Package.time_delivered, Package.truckID])
             print(tabulate(table_data, headers=[f"{Fore.BLUE}Package ID{Style.RESET_ALL}", "Address", f"{Fore.LIGHTGREEN_EX}Status{Style.RESET_ALL}", "Deliver by", f"{Fore.CYAN}Truck ID{Style.RESET_ALL}"], tablefmt="pretty"))
 
@@ -348,9 +358,10 @@ def interface():
         else:
             print("Invalid command, please try again.")
 
-#main
+#main executes what is called within scope
 if __name__ == "__main__":
     run()
     interface()
+
 
     

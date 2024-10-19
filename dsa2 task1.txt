@@ -1,6 +1,5 @@
 	Task1 
 ID: 011746951
-Name: Thinh Phan
 A. Identify a named self-adjusting algorithm (e.g., nearest neighbor algorithm, greedy algorithm) that could be used in your program to deliver the packages. 
 A greedy algorithm will be used to deliver the packages.
  B. Identify a self-adjusting data structure, such as a hash table, that could be used with the algorithm identified in part A to store the package data. 

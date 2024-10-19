@@ -55,8 +55,8 @@ def calculate_fitness(route, truck):
     total_distance += get_distance(currentAddress, addressDict["4001 South 700 East"])
     return total_distance
 
-#shuffle edge weight then append to the arr[]
-def create_initial_population(truck_packages):
+#shuffle vertexes then append to the arr[]
+def copulate(truck_packages):
     population = []
     for i in range(POPULATION_SIZE):
         route = truck_packages.copy()
@@ -65,7 +65,7 @@ def create_initial_population(truck_packages):
     return population
 
 # combine parts of two routes
-def crossover(parent1, parent2):
+def inheritance(parent1, parent2):
     size = len(parent1)
     #create empty route
     child = [None] * size
@@ -82,39 +82,39 @@ def crossover(parent1, parent2):
 
     return child
 
-#randomize the route , select two vertices within the route and swap them
-def mutate(route):
+#randomize the route , select two vertices(packages) within the route and swap them
+def mutation(route):
     if random.random() < MUTATION_RATE:
         idx1, idx2 = random.sample(range(len(route)), 2)
         route[idx1], route[idx2] = route[idx2], route[idx1]
     return route
 
-#select the best routes from the population
+#sort by fitness score, keep 50% of the routes from population
 def selection(population, truck):
     population_sorted = sorted(population, key=lambda route: calculate_fitness(route, truck))
-    #keep 50% of routes
     return population_sorted[:POPULATION_SIZE // 2]  
 
 
-def genetic_algorithm(truck):
-    population = create_initial_population(truck.packages)
+def route(truck):
+    population = copulate(truck.packages)
     for generation in range(GENERATIONS):
         #select route
         selected_population = selection(population, truck)
         next_population = []
-        for _ in range(POPULATION_SIZE):
+        for i in range(POPULATION_SIZE):
             parent1, parent2 = random.sample(selected_population, 2)
-            child = crossover(parent1, parent2)
-            child = mutate(child)
+            #inherit
+            child = inheritance(parent1, parent2)
+            #mutation
+            child = mutation(child)
             next_population.append(child)
         population = next_population
-    #return the best route
     bestRoute = min(population, key=lambda route: calculate_fitness(route, truck))
     return bestRoute
 
-#init route
+#assign route, truck address, fetch packages and edge weights, and increment miles/time
 def init(truck):
-    bestRoute = genetic_algorithm(truck)
+    bestRoute = route(truck)
     
     currentAddress = truck.address
     for package_id in bestRoute:
@@ -131,7 +131,7 @@ def init(truck):
             currentAddress = package.address
             package.time_delivered = truck.time
             package.truckID = truck.truckID
-    # Return to hub
+    #return to hub
     hub = addressDict["4001 South 700 East"]
     distance_to_hub = get_distance(currentAddress, hub)
     truck.miles += distance_to_hub
@@ -293,9 +293,6 @@ def interface():
                 initTime = truckDepartureTime[2]
             elif tempStorage.truckID == 3:
                 initTime = truckDepartureTime[3]
-            
-            print('Delivery time', tempStorage.time_delivered)
-            print('Departure time', initTime)
 
             if timeStamp <= initTime:
                 mg = "at hub"
@@ -304,8 +301,19 @@ def interface():
             elif timeStamp >= tempStorage.time_delivered:
                 mg =  "delivered"
 
+            headers = ["Package ID", "Left the Hub At", "Status", "Deliver At", "Deliver To", "Special Notes", "Truck Number"]
+            package_data = []
 
-            print(f"\nTimestamp: {timeStamp} \nPackageID: {tempStorage.id} \nLeft the hub at: {initTime} \nStatus: {mg} \nDeliver at: {tempStorage.time_delivered} \nDeliver to: {tempStorage.address} \nSpecial Notes: {tempStorage.notes} \nTruck Number: {tempStorage.truckID}")
+            package_data.append([
+                tempStorage.id,
+                initTime,
+                mg,
+                tempStorage.time_delivered,
+                tempStorage.address,
+                tempStorage.notes,
+                tempStorage.truckID
+            ])
+            print(tabulate(package_data, headers=headers, tablefmt="grid"))
 
         elif selectedNum == 2:
             timeStamp = input('Enter a time in HH:MM format: ')

@@ -2,86 +2,96 @@
 A. Identify a named self-adjusting algorithm (e.g., nearest neighbor algorithm, greedy algorithm) that could be used in your program to deliver the packages. 
 GA will be used to deliver the packages.
  B. Identify a self-adjusting data structure, such as a hash table, that could be used with the algorithm identified in part A to store the package data. 
-A Dictionary can be used in order to store the addresses.
+A Dictionary can be used in order to store the packages and addresses.
 1. Explain how your data structure accounts for the relationship between the data components you are storing.
-A Dictionary stores data as key-value pair. With dictionaries, we can access and update the location in O(1) time if we know it's value.  The relationship between the dictionary and other data components is important for calculating the shortest path. As the algorithm traverses the graph of package locations , It uses the addresses stored in the dictionary to fetch the next package location. When calculating distances between the truck's current location and the addresses of packages, the algorithm retrieves the corresponding package object from the dictionary using their keys.
+A Dictionary is a data structure that stores data as key-values. With dictionaries, we can access and update the addresses in O(1) time if we know it's value. The relationship between dictionaries and other objects is that each serve a different purpose. In the program , addresses are store using dictionaries and that makes it simpler to access the address location in order to return the trucks back to hub once they finished delivery. Although other data structures such as lists were used to store packages, dictionaries was able to reduce the lookup time making the program more efficient.
 C. Write an overview of your program in which you do the following:
 1. Explain the algorithm’s logic using pseudocode.
-define getdistance(truckaddress, packageaddress):
-        distance = distanceData[truckaddress][packageaddress]
+getdistance(truckaddress, packageaddress):
+        distance = distanceArr[truckaddress][packageaddress]
  
-addressdict= {}
-distanceData = []
-POPULATION_SIZE: 100 
-MUTATION_RATE: 0.01
-GENERATIONS: 100
+POPULATION = 100 
+MUTATION RATE = 0.01 = 1%
+GENERATIONS = 100
 
-define totaldistance(route, truck):
+totaldistance(truck):
       totaldistance = 0
-      currentAddress = truck.address
-    FOR each package_id in route:
-           if package exists:
+      currentAddress = truck starting address
+    for package in route:
+           if package:
             totaldistance += getdistance(currentAddress, package.address)
             currentAddress = package.address
     totaldistance += getdistance(currentAddress, addressDict["At the hub"])
     return totaldistance
 
-define population(truckpackages):
-    population = empty list
-    for i from 1 - POPULATION_SIZE:
-        route = copy truckpackages
-        random shuffle route
+population(truckpackages):
+    population = []
+    for i in range(POPULATION):
+        route = truckpackages
+        random.shuffle(route)
         population.append(route)
     return population
 
-define inheritance(parent1, parent2):
+inheritance(parent1, parent2):
     size = len(parent1)
-    child = list of None values of size
-    start, end = random indices in the range of size (2)
+    child = [] * size
+    start, end = random.(for i in  range((2))
     child[start:end] = parent1[start:end]
-    SET p2 = 0
-    for i FROM 0 of size:
+    p2 = 0
+    for i in range(size):
         if child[i] is empty:
-            while parent2[p2] is in child:
-                p2_pointer += 1
+            while parent2[p2]:
+                p2 ++ 
             child[i] = parent2[p2]
     return child
 
-define mutation(route):
-    if random value < mutation_rate:
-         i, j = in the range of route
-        swap route[i] with route[j]
+mutation(route):
+    if route value < mutation_rate:
+         for i, j in the range of route
+        swap route[i][j] with route[j][i]
     return route
 
-define selection(population, truck):
-    sort population by calculatetotal()
-    return top[:50] of sort population
+selection(population, truck):
+    sort population by totaldistance()
+    return top[:50] of sorted population
 
-define bestroute(truck):
-    set population = populate(truck.packages)
-    for generation from 1 to GENERATIONS:
+bestroute(truckpackages):
+    population = populate(truck.packages)
+    for g in GENERATIONS:
         selected = selection(population, truck)
         nextpopulation = []
-        for i FROM 1 TO POPULATION_SIZE:
+        for i in POPULATION:
             parent1, parent2 = random.(selected, for i in range (2))
             child = inherit(parent1, parent2)
             child = mutate(child)
             nextpopulation.append(child)
         population = nextpopulation
-    route = route with min(population)
+    route = min(population)
     return route
 
-getdistance() retrieves the edge weight between two addresses (truck's current location & package's location) from a distance matrix. population size, mutation_rate, generations are parameters to configure the algorithm. Totaldistance method calculates the total distance for a given route. It initializes totaldistance to zero and starts at the truck's initial address. Population function initializes the population of routes by generating random routes. It creates an empty list for the population. For each individual in the population, it makes a copy of the truck's packages and shuffles them randomly to create a new route. Each route is added to the population list. inheritance method creates a child route by combining routes from two parents. It creates a child list and randomly selects two points to copy from parent1. For each empty spot in the child route, it adds a non-duplicate package from parent2. Mutation method introduces random changes to a route to maintain diversity. If a randomly generated number is less than the mutation rate, it selects two random indices in the route and swaps the packages at those positions. Selection method sorts the population based on the objective function (total distance). It retains the top 50% of routes for the next generation. The main function runs to find the best delivery route. It initializes the population with random routes based on the truck's packages. For each generation, it selects the best routes, creates a new population through inheritance and mutation, and repeats the process. After all generations are processed, it finds the route with the minimum total distance and returns it.
+	Getdistance() retrieves the edge weight between two addresses (truck's current location & package's location) from a distance matrix. population size, mutation_rate, generations are parameters to configure the algorithm. Totaldistance method calculates the total distance for a given truck route(initlocation + packageaddresses). It initializes totaldistance to zero and starts at the truck's initial address and calculates total weight using the package addresses. Population function initializes the population of routes by generating random routes. It creates an empty list for the population. For each individual in the population, it makes a copy of the truck's packages and shuffles them randomly to create a new route. Each route is added to the population list. Inheritance method creates a child route by combining a route from two parents. It creates a child list and randomly selects two positions then copies from parent1. 
+	For each empty spot in the child route, it adds a non-duplicate location from parent2. Mutation method randomly generated number if it is less than the mutation rate then it selects two random indices in the route and swaps the packages at those positions. Selection method sorts the population based on (total distance) and retains the first 50% of routes. The main function runs to find the best delivery route. It initializes the population with random routes based on the truck's packages. For each generation, it creates a child route through inheritance() and mutation() then appends to an array and selects the minimum (shortest route) then returns it. 
 
 2.  Describe the programming environment you will use to create the Python application, including both the software and hardware you will use. 
 Software: Windows 11 OS, VSCode IDE , IDE Terminal, Tabulate python package, Colorama package. Python version 3.8
-Hardware: Intel i5 10th gen CPU 2.9-3.6ghz, 12GB DDR4 Ram, M.2 SSD.
+Hardware: Intel i5 10th gen CPU 2.7-3.6ghz, 12GB DDR4 Ram, M.2 SSD.
 3. Evaluate the space-time complexity of each major segment of the program and the entire program using big-O notation. 
-- Address Dictionary has a time-space complexity of O(1). Nearest neighbor has a time complexity of O(N^3) , creating the deque requires reading package data from the list. There is also a while loop with an inner loop within deliver(). Space complexity is O(N), since one data structure is utilized. readAddresses() , readDistances() , readPackages() has a time complexity of O(n) which is dependant on the size of the csv files. Interface() has a complexity of O(n) as it loops the package list in order to retrieve the package so the program can display the information. Overall the program has a space-time complexity of O(n^2).
+-Address Dictionary has a time-space complexity of O(1). 
+-getdistance(): time-space complexity is O(1). 
+-calculatedistance() has a time-space complexity of o(n). 
+-Inheritance() has a time-space complexity of o(n^2). 
+- The time complexity of mutate() is O(1). 
+- ReadAddresses() , readDistances() , readPackages() has a time complexity of O(n) which is    dependant of the csv file size. 
+- Populate() has a time complexity of o(n). 
+- Weights() has a space-time complexity of o(n). 
+- Interface() has an approximately complexity of O(n) as it have read the existing data in order to retrieve the information for the program to display. 
+-assignPackages() has a complexity of O(N^2)
+Overall the program has a space-time complexity of O(n).
+
 4. Explain the capability of your solution to scale and adapt to a growing number of packages. 
-The program currently relies on manually loading the packages instead of automatically handling them. If there were more packages parsed , they would not be added. Some packages have special conditions that isn't implemented yet in the system.
+The program has an embedded method that automatically loads the packages onto the trucks based on special notes and delivery deadlines so the system is capable of adapting in case the volume of packages were to increase without manual intervention.
 5. Discuss why the software design would be efficient and easy to maintain.
-The code is modular, each function handles a specific part of the logic, such as loadAddresses(), loadPackages(). This separation of concerns makes it easier to maintain individual pieces without affecting the entire system. The program is straightforward to use with an implementation of terminal interface. Calculations are performed in the background and stored within class objects. Useful functions are implemented, that are accessible through dot operators. It maintainable , using basic programming principles , there are comments throughout the program explaining the code structure. Print statements on initialized memory structures are performed to verify data integrity.
+The system is modular, each function handles a specific part of the logic, such as when parsing data; loadAddresses(), loadPackages(), etc. This separation of concerns makes it easier to maintain individual pieces without affecting the entire system. The program is straightforward to use with an implementation of terminal interface. Calculations are performed in the background and stored within initiated class objects. Many useful functions are implemented, accessible through dot operators. It maintainable , there are comments throughout the program explaining the code structure. Print statements on initialized memory structures are performed to verify data integrity.
  6. Describe both the strengths and weaknesses of the self-adjusting data structure (e.g., the hash table). 
 Dictionaries provide a more organized way to manage key-value pairs. However, they can encounter issues with hash collisions as more addresses are added, leading to slow lookups. When multiple values hash to the same bucket, it results in decreased performance.
 D.  Provide an intuitive interface for the user to view the delivery status (including the delivery time) of any package at any time and the total mileage traveled by all trucks.  
@@ -166,19 +176,22 @@ define interface():
             break
         else:
             print("Invalid command, please try again.")
-if __name__ == "__main__":
+if "__main__":
     interface()
 
 1.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 8:35 a.m. and 9:25 a.m. 
  
 
 
+
 2.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 9:35 a.m. and 10:25 a.m. 
  
 
 
+
 3.  Provide screenshots to show the status of all packages loaded onto each truck at a time between 12:03 p.m. and 1:12 p.m. 
  
+
 
 
 
@@ -187,21 +200,29 @@ E.  Provide screenshots showing successful completion of the code that includes 
 
 
 
+
 F.  Justify the package delivery algorithm used in the solution as written in the original program by doing the following: 
 1.  Describe two or more strengths of the algorithm used in the solution. 
-GA can evaluate multiple routes which increases the likelihood of finding optimal solutions. This is useful for package delivery where the number of routes can grow exponentially. GA is able to adapt over time which makes the algorithm adaptable against changes in input data, such as variations in the number of packages. If a new package is added or an address needs to be altered, the algorithm can quickly re-evaluate and optimize the routes without requiring a rewrite of the system. GA also uses concepts like crossover to introduce diversity into the population. This increases the chances of escaping local optima and finding more optimal routes.
+GA can evaluate multiple routes which increases the likelihood of finding optimal solutions. This is useful for package delivery where the number of routes can grow exponentially. The algorithm is able to adapt over time which makes it resilient against changes in the number of packages. If a new package is added or an address is altered, the algorithm can quickly re-evaluate the routes without requiring a rewrite of the system. Genetic also uses concepts like crossover to introduce diversity into the population. This increases the chances of escaping local optima and finding more optimal routes.
 2.  Verify that the algorithm used in the solution meets all requirements in the scenario. 
-Special conditions: The program addresses specific conditions, such as handling package#9, which requires a different delivery address if delivered after 10:20 AM. The code checks the time (if package.id == '9' and truck.time > DeliveryTime) and dynamically adjusts the delivery address while delivering packages under 140miles.
+Special conditions: The program addresses specific conditions, such as handling package#9, that requires a different delivery address if delivered after 10:20 AM. The code checks the time (if package.id == '9' and truck.time > delta(datetime(10:20))) and adjusts the delivery address while delivering packages under 140miles. 
+1. No packages are being delivered at the departure time of the trucks  - This validation has passed. 
+2. Packages with similar street addresses will be delivered at the same time - Not an abnormality.
+3. 3 trucks are available along with 2 drivers. 2 trucks can leave and overlap. Truck3 can leave when either truck1-2 returns before its departure time- Check passed
 3.  Identify two other named algorithms that are different from the algorithm implemented in the solution and would meet all requirements in the scenario. 
 Prim's Algorithm and Nearest Neighbor. 
 a.  Describe how both algorithms identified in part F3 are different from nearest neighbor used in the solution. 
-- Genetic operates on a population of candidate(edge weights) represented as chromosomes. Each address undergoes processes such as selection, crossover, and mutation to produce offspring. Selected routes is evaluated based on a defined objective (e.g., distance traveled). Nearest Neighbor aims to create a complete route by choosing the next unvisited neighbor until it reaches the last node.
--Prim's algorithm constructs a Minimum Spanning Tree for a weighted graph by starting from an random vertex then adding the minimum weight edge that connects a vertex within a tree to a vertex outside it. It is generally used in scenarios for problems like network design. Nearest Neighbor is typically applied in routing problems, where each vertex should be visited once.
+- Nearest Neighbor starts at a defined node and iteratively visits the nearest unvisited vertex until all vertices have been visited.The Algorithm makes locally optimal choices based on lowest edge weight to find a global optimum. In contrast, genetic looks at multiple potential routes simultaneously and can escape local optima through concepts like inheritance and mutation. Nearest Neighbor is faster and simpler to implement but it can produce suboptimal solutions. While GA can produce better results over time however this requires more computational resource.
+-Prim's algorithm constructs a Minimum Spanning Tree for weighted graphs starting from an random vertex then adding the minimum weight edge that connects a vertex within a tree to a vertex outside it. Prim's Algorithm runs in O(E log V) time, where E is the number of edges and V is the number of vertices, making it efficient for dense graphs. GA's runtime is O(N) however does require significant amount of computational time depending on population size and number of generations.
 H.  Describe what you would do differently, other than the two algorithms identified in part F3, if you did this project again, including details of the modifications that would be made. 
-A control structure would likely have been implemented to determine the appropriate truck assignment for packages based on delivery deadlines and special notes. This conditional logic allows the program to scale as additional packages are added and automates the process of handling packages without manually adding them onto the trucks. This logic will likely be implemented within the def function which parses the csv file.
+A control structure would likely have been implemented to determine the appropriate truck assignment for packages based on delivery deadlines and special notes. This conditional logic allows the program to scale as additional packages are added and automates the process of handling packages without manually adding them onto the trucks. This logic would likely be implemented within the method which parses the csv file.
 1. Identify two other data structures that could meet the same requirements in the scenario  
 A doubly linked list and An Adjacency matrix 
 a.  Describe how each data structure identified in H1 is different from the data structure used in the solution. 
-Doubly linked list is a data structure where each node contains a reference to both next and previous node. This allows traversal in both directions. Each node stores data with two pointers, one pointing to the next node another to the previous node.
-An adjacency matrix requires O(V2)space, where V is the number of vertices. An adjacency matrix works well for weighted graphs, where edges have associated weights. The matrix can store weights in cells, making edge lookups fast. O(1) Time complexity. 
-I. References:
+Doubly linked list is a data structure where each node contains a reference to both next and previous node. This enables traversal in both directions. Each node stores data with two pointers, one pointing to the next node another to the previous node. This would've been useful if we were using nearest neighbor i have described in F3a.
+An adjacency matrix requires O(V2)space, where V is the number of vertices. It works well for weighted graphs, where edges have an associated weight. Accessing a value is called through name[i][j]. It has a lookup time of o(1) when compared with the array currently holding the vertices, it has a lookup time of o(n) which is slower.
+I. References: Logic flow & Readings
+Artificial Intelligence for Big Data,  https://subscription.packtpub.com/book/data/9781788472173/8/ch08lvl1sec60/genetic-algorithms-structure Accessed 20 Oct. 2024. 
+“Genetic Algorithms.” GeeksforGeeks, GeeksforGeeks, 8 Mar. 2024, www.geeksforgeeks.org/genetic-algorithms/. 
+Bani-Hani, Dana. “Genetic Algorithm (GA): A Simple and Intuitive Guide.” Medium, Towards Data Science, 14 June 2020, towardsdatascience.com/genetic-algorithm-a-simple-and-intuitive-guide-51c04cc1f9ed. 
+Ossipov, Eugene. “Genetic Algorithms (GA): Search and Optimization by Natural Selection: Toptal®.” Toptal Engineering Blog, Toptal, 23 Mar. 2017, www.toptal.com/algorithms/genetic-algorithms. 
